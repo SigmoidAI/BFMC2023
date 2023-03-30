@@ -1,0 +1,9 @@
+scikit-image==0.20.0
+fast-reflection-removal==1.1
+opencv-python==4.7.0.72
+numpy==1.24.2
+networkx==3.0
+matplotlib==3.7.1
+ultralytics==8.0.52
+torch==2.0.0
+torchvision==0.15.1
