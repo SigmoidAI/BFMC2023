@@ -8,7 +8,8 @@
 
 #### For Windows
 Before running this command, make sure you have python 3.8 installed and added to your PATH variable and it is your main python version.
-```python
+
+```cmd
 python -m venv venv
 venv\Scripts\activate.bat 
 ```
@@ -25,7 +26,15 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Run the project
+### 4. Download the [Pyzed sdk](https://www.stereolabs.com/developers/release/) 
+
+### 5. Install the Pyzed sdk (idk if it will work)
+
+```cmd
+python scripts\get_python_api.py
+```
+
+### 6. Run the project
 
 ```python
 python scripts/main.py

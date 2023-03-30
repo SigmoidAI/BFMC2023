@@ -6,7 +6,7 @@ import json
 import time
 import networkx as nx
 import matplotlib.pyplot as plt
-# import pyzed.defines as sl
+import pyzed.sl as sl
 from ultralytics import YOLO
 import random
 import torch
@@ -315,54 +315,53 @@ def initialize_program():
     #current intersection node number
     # current_intersection = intersection_to_go[current_intersection_index]
 
-# def init_camera():
-#     global cap, runtime, left, res
-#     cap = sl.Camera()
+def init_camera():
+    global cap, runtime, left, res
+    cap = sl.Camera()
 
-#     init_params = sl.InitParameters()
-#     init_params.camera_resolution = sl.RESOLUTION.HD1080  # Use HD720 video mode
-#     init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
-#     init_params.coordinate_units = sl.UNIT.METER
-#     init_params.sdk_verbose = True
+    init_params = sl.InitParameters()
+    init_params.camera_resolution = sl.RESOLUTION.HD1080  # Use HD720 video mode
+    init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
+    init_params.coordinate_units = sl.UNIT.METER
+    init_params.sdk_verbose = True
     
     
-#     runtime = sl.RuntimeParameters()
-#     left = sl.Mat()
-#     res = sl.Resolution(1280, 720)
-#     err = cap.open(init_params)
+    runtime = sl.RuntimeParameters()
+    left = sl.Mat()
+    res = sl.Resolution(1280, 720)
+    err = cap.open(init_params)
 
 
 def line_process(live_camera = True, filepath = './files/qualification_video2.mp4'):
     global frames, runtime, cap, left, res, img_w, img_h, img_area, prev_offset, prev_angle, prev_line, current_index, direction # TODO not sure if should remove something here
 
     if live_camera:
-        pass
-        # cap = init_camera()
+        cap = init_camera()
 
-        # if output_video:
-        #     height = 720 
-        #     width = 1280 
-        #     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        #     out = cv2.VideoWriter("output_video_camera.mp4", fourcc, 30.0, (width, height), isColor=True)
+        if output_video:
+            height = 720 
+            width = 1280 
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter("output_video_camera.mp4", fourcc, 30.0, (width, height), isColor=True)
         
-        # while True:
+        while True:
 
-        #     err_code = cap.grab(runtime)
-        #     if err_code != sl.ERROR_CODE.SUCCESS:
-        #         break
-        #     frames += 1
+            err_code = cap.grab(runtime)
+            if err_code != sl.ERROR_CODE.SUCCESS:
+                break
+            frames += 1
 
-        #     cap.retrieve_image(left, sl.VIEW.LEFT, resolution=res)
+            cap.retrieve_image(left, sl.VIEW.LEFT, resolution=res)
 
-        #     if frames%FRAME_FREQUENCY == 0:
+            if frames%FRAME_FREQUENCY == 0:
 
-        #         img = cv2.cvtColor(left.get_data(), cv2.COLOR_RGBA2RGB)
-        #         img = frame_process(img)
-        #         if output_video:
-        #             out.write(img)
-        #         cv2.imshow('ZED', img)
-        #     if cv2.waitKey(1) & 0xFF == ord('q'):
-        #         break
+                img = cv2.cvtColor(left.get_data(), cv2.COLOR_RGBA2RGB)
+                img = frame_process(img)
+                if output_video:
+                    out.write(img)
+                cv2.imshow('ZED', img)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
     else:
         # Get video capture
