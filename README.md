@@ -6,8 +6,8 @@
 
 ### 2. Project uses Python 3.8, preferably create a virtual environement for your workspace:
 
-#### For Windows
 Before running this command, make sure you have python 3.8 installed and added to your PATH variable and it is your main python version.
+#### For Windows
 ```python
 python -m venv venv
 venv\Scripts\activate.bat 
