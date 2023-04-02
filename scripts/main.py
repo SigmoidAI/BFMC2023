@@ -10,7 +10,8 @@ import pyzed.sl as sl
 from ultralytics import YOLO
 import random
 import torch
-# import sl
+
+from car_actions import get_action
 
 # variables that may need to be changed
 STARTING_NODE = '86'
@@ -187,6 +188,7 @@ def frame_process(img):
                     current_intersection_index+=1
                     current_index = shortest_path.index(intersection_to_go[current_intersection_index])
                     direction = get_turn_direction()
+                    action = get_action(last_seen_label, direction)
                 cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
                 cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
     if time.time() - last_timestamp > 5:

@@ -4,7 +4,7 @@ log_format = '%(asctime)s - [%(levelname)s] [%(module)s.%(funcName)s:%(lineno)d]
 logging.basicConfig(format=log_format, level=logging.INFO)
 log = logging.getLogger(__name__)
 
-def change_car_speed(speed):
+def change_car_speed(speed, time = 0):
     # should put global vars
     log.info("Changing car speed to " + str(speed))
     pass

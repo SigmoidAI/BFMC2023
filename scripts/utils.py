@@ -340,18 +340,40 @@ def apply_hsv_mask(img):
 
   return output_img
 
+def remove_reflection(image):
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Apply a Gaussian blur to the grayscale image
+    blurred = cv2.GaussianBlur(gray, (15, 15), 0)
+
+    # Detect edges in the blurred image using Canny edge detection
+    edges = cv2.Canny(blurred, 50, 150)
+
+    # Dilate the edges to fill in gaps
+    kernel = np.ones((3, 3), np.uint8)
+    dilated_edges = cv2.dilate(edges, kernel, iterations=1)
+
+    # Create a mask from the dilated edges
+    _, mask = cv2.threshold(dilated_edges, 1, 255, cv2.THRESH_BINARY_INV)
+
+    # Apply the mask to the original image
+    result = cv2.inpaint(image, mask, 3, cv2.INPAINT_TELEA)
+
+    return result
+
 
 def find_line_lane(nr_frame, image):
     # transform to gray scale and hue scale
-    # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # blur_gray_image = cv2.GaussianBlur(gray_image, (5, 5), 3)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blur_gray_image = cv2.GaussianBlur(gray_image, (5, 5), 3)
 
     # this version, hsv mask
-    # hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    # lower_white = np.array([0, 0, bright_high], dtype=np.uint8)
-    # upper_white = np.array([80, 80, 255], dtype=np.uint8)
-    # mask = cv2.inRange(hsv_image, lower_white, upper_white)
-    # t_image = cv2.bitwise_and(image, image, mask=mask)
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower_white = np.array([0, 0, bright_high], dtype=np.uint8)
+    upper_white = np.array([80, 80, 255], dtype=np.uint8)
+    mask = cv2.inRange(hsv_image, lower_white, upper_white)
+    t_image = cv2.bitwise_and(image, image, mask=mask)
     # print(image.shape)
     # print(image)
     # cv2.imshow('img', image)
@@ -366,18 +388,21 @@ def find_line_lane(nr_frame, image):
     # show current path
     print(os.getcwd())
     if nr_frame % 10 == 0:
-        if nr_frame == 0:
-            dereflected_frame = cv2.imread(r'./files/qualification_video/no_reflections_frames/0000.jpg')
-        elif nr_frame < 100:
-            dereflected_frame = cv2.imread(fr'./files/qualification_video/no_reflections_frames/00{nr_frame}.jpg')
-        elif nr_frame < 1000:
-            dereflected_frame = cv2.imread(fr'./files/qualification_video/no_reflections_frames/0{nr_frame}.jpg')
-        else:
-            dereflected_frame = cv2.imread(fr'./files/qualification_video/no_reflections_frames/{nr_frame}.jpg')
+        # if nr_frame == 0:
+        #     dereflected_frame = cv2.imread(r'./files/qualification_video/no_reflections_frames/0000.jpg')
+        # elif nr_frame < 100:
+        #     dereflected_frame = cv2.imread(fr'./files/qualification_video/no_reflections_frames/00{nr_frame}.jpg')
+        # elif nr_frame < 1000:
+        #     dereflected_frame = cv2.imread(fr'./files/qualification_video/no_reflections_frames/0{nr_frame}.jpg')
+        # else:
+        #     dereflected_frame = cv2.imread(fr'./files/qualification_video/no_reflections_frames/{nr_frame}.jpg')
+        # no_ref_frame = image.copy()
         # frame_0_1 = no_ref_frame.copy() / 255.0
         # dereflected_frame = alg.remove_reflection(frame_0_1)
+
+        # dereflected_frame = remove_reflection(no_ref_frame)
         # dereflected_frame = cv2.convertScaleAbs((dereflected_frame * 255.0).astype(np.int32))  
-        t_image = apply_hsv_mask(dereflected_frame)
+        # t_image = apply_hsv_mask(dereflected_frame)
         # cv2.imshow('t_image', cv2.resize(t_image, (720, 480)))
 
         # identify edges
