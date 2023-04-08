@@ -34,7 +34,12 @@ pip install -r requirements.txt
 python scripts\get_python_api.py
 ```
 
-### 6. Run the project
+### 6. Open Port 
+```cmd
+sudo chmod 777 /dev/ttyACM0
+```
+
+### 7. Run the project
 
 ```python
 python scripts/main.py
