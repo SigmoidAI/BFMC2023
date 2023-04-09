@@ -212,6 +212,26 @@ def frame_process(img):
     log.info(f'Relative angle is {relative_angle}')
     # print("Frame: {}, Car offset: {}, Relative angle: {}".format(frame, car_offset, relative_angle))
 
+def predict(frame):
+    scale = 1280 / max(frame.shape)
+    if scale < 1:
+        frame = cv2.resize(
+            src=frame,
+            dsize=None,
+            fx=scale,
+            fy=scale,
+            interpolation=cv2.INTER_AREA,
+        )
+    # Get the results.
+    input_image = np.array(frame)
+
+    # start_time = time.time()
+    # model expects RGB image, while video capturing in BGR
+    detections = detect(input_image[:, :, ::-1], compiled_model)[0]
+    # stop_time = time.time()
+
+    image_with_boxes = draw_results(detections, input_image, label_map)
+    
 def initialize_program():
     global model, shortest_path, intersection_to_go, turning_points, current_intersection_index, turning_signs, last_seen_label, last_timestamp, current_index, direction
 
