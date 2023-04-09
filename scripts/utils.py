@@ -5,7 +5,6 @@ from skimage.morphology import erosion, dilation
 import random
 import os
 import numpy as np
-import pandas as pd
 import cv2
 import math
 from frr import FastReflectionRemoval

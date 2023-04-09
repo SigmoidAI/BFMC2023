@@ -10,8 +10,7 @@ import pyzed.sl as sl
 from ultralytics import YOLO
 import random
 import torch
-
-from car_actions import get_action
+from car_actions import *
 
 # variables that may need to be changed
 STARTING_NODE = '86'
@@ -215,6 +214,8 @@ def frame_process(img):
 
 def initialize_program():
     global model, shortest_path, intersection_to_go, turning_points, current_intersection_index, turning_signs, last_seen_label, last_timestamp, current_index, direction
+
+    open_port()
     model = YOLO(PATH_TO_YOLO)
 
     shortest_path = get_shortest_path()
@@ -280,9 +281,10 @@ def line_process(live_camera = True, filepath = './files/qualification_video2.mp
 
                 img = cv2.cvtColor(left.get_data(), cv2.COLOR_RGBA2RGB)
                 img = frame_process(img)
+
                 if output_video:
                     out.write(img)
-                cv2.imshow('ZED', img)
+                # cv2.imshow('ZED', img)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -318,4 +320,4 @@ def line_process(live_camera = True, filepath = './files/qualification_video2.mp
 
 if __name__=="__main__":
     initialize_program()
-    line_process(live_camera = False)
+    line_process(live_camera = True)

@@ -1,8 +1,17 @@
 import logging
+import serial
 
+
+ser = None
 log_format = '%(asctime)s - [%(levelname)s] [%(module)s.%(funcName)s:%(lineno)d]: %(message)s'
 logging.basicConfig(format=log_format, level=logging.INFO)
 log = logging.getLogger(__name__)
+
+
+def open_port():
+    global ser
+    ser = serial.Serial('/dev/ttyACM0', 115200) # Open serial port at 9600 bps
+
 
 def change_car_speed(speed, time = 0):
     # should put global vars
