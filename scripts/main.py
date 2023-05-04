@@ -424,4 +424,23 @@ def runVehicleListener():
 
 if __name__=="__main__":
     initialize_program()
+    runTrafficLightListener()
+    runVehicleListener()
+    beacon = 23456
+    id = 120
+    serverpublickey = 'publickey_livetraffic_server.pem'
+    clientprivatekey = 'privatekey_client.pem'
+    
+    gpsStR, gpsStS = Pipe(duplex = False)
+
+    envhandler = EnvironmentalHandler(id, beacon, serverpublickey, gpsStR, clientprivatekey)
+    envhandler.start()
+    time.sleep(5)
+    for x in range(1, 10):
+        time.sleep(random.uniform(1,5))
+        a = {"obstacle_id": int(random.uniform(0,25)), "x": random.uniform(0,15), "y": 			random.uniform(0,15)}
+        gpsStS.send(a)
+        
+    envhandler.stop()
+    envhandler.join()
     line_process(live_camera = True)
