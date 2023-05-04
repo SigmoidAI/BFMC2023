@@ -1,4 +1,5 @@
 files/*.mp4
+files/*.avi
 *.whl
 
 # Byte-compiled / optimized / DLL files
