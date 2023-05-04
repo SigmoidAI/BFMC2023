@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from utils import find_line_lane, shortest_path_without_weights, intersections, point_to_sign
+from openvino_detection import init_model, predict
 import logging
 import json
 import time
@@ -23,8 +24,10 @@ NODES_TO_VISIT = ['78', '40', '105','113', '111', '71', '62']
 
 # Constants
 PATH_TO_GRAPHML = r'./files/Competition_track.graphml'
-PATH_TO_YOLO = r'./models/best_based_on_8n.pt'
-FRAME_FREQUENCY = 2
+PATH_TO_YOLO = r'./models/semifinal_model_1.pt'   #r'./models/best_based_on_8n.pt'
+MODEL_NAME = 'semifinal_model_1'
+PATH_TO_VIDEO = r'files\real_track_11_right.avi'
+FRAME_FREQUENCY = 3
 CLASS_NAMES = ['crossed_highway_sign', 'green_light', 'highway_sign', 'no_entry_sign','one_way_road_sign', 'parking_sign','pedestrian_sign', 'priority_sign', 'red_light', 'roundabout_sign','stop_sign', 'yellow_light', 'car', 'pedestrian', 'roadblock']
 COLORS = [(92,164,100),(0,255,0),(65,174,68), (51,51,255),(255,0,0), (204,0,0),(255,153,51),(51,255,255),(0,0,255), (192,192,192),(0,0,204), (0,255,255),(0,0,0), (204,229,255),(0,128,255)]
 DISPLAY_MESSAGE = ["CROSSED HIGHWAY, SPEED 1", 'GO', 'HIGHWAY, SPEED 2', 'NO ENTRY','ONE WAY ROAD', 'DO PARKING, SPEED 0.5','CROSSWALK, LOOK OUT, SPEED 0.5', 'PRIORITY', 'RED LIGHT, STOP', 'ROUNDABOUT','STOP', 'YELLOW, wait', 'CAR', 'PEDESTRIAN', 'OBSTACLE!']
@@ -133,9 +136,26 @@ def get_shortest_path():
 
     G = nx.read_graphml(PATH_TO_GRAPHML)
     pos=nx.fruchterman_reingold_layout(G)
-    # shortest_path = shortest_path_without_weights(G, STARTING_NODE, NODES_TO_VISIT)    
+    shortest_path = shortest_path_without_weights(G, STARTING_NODE, NODES_TO_VISIT)    
 
-    shortest_path = ['78', '87', '45', '48','40','90', '54', '57', '49', '308', \
+    # shortest_path = ['78', '87', '45', '48','40','90', '54', '57', '49', '308', \
+    # '309', '310', '311', '312', '375', '376', '377', '378', '379', '380', '381', '382', '383', '384', \
+    # '385', '386', '387', '388', '389', '390', '391', '392', '393', '394', '395', '396', '397', '398', \
+    # '338', '339', '340', '341', '342', '305', '306', '307', '267', '268', '269', '270', '271', '272', \
+    # '273', '274', '275', '276', '277', '278', '279', '280', '281', '282', '283', '284', '285', '286', \
+    # '287', '23', '28', '24', '147', '18', '21', '13', '145', '61', '65', '58', '129', '130', '131', '132', \
+    # '133', '72', '75', '69', '110', '2', '9', '5', '112', '34', '38', '31', '114', '115', '116', '117', \
+    # '118', '27', '30', '22', '288', '289', '290', '291', '292', '293', '294', '295', '296', '297', '298', \
+    # '299', '300', '301', '302', '303', '304', '305', '306', '231', '232', '233', '234', '235', '236', '237', \
+    # '238', '239', '240', '241', '242', '243', '244', '245', '246', '247', '248', '249', '250', '251', '252', \
+    # '253', '254', '255', '256', '257', '258', '259', '260', '261', '262', '263', '264', '265', '266', '172', \
+    # '173', '174', '175', '176', '177', '178', '179', '180', '181', '182', '183', '184', '185', '186', '187', \
+    # '188', '189', '190', '191', '192', '193', '194', '195', '196', '197', '63', '66', '58', '129', '130', \
+    # '131', '132', '133', '72', '75', '67', '95', '96', '97', '81', '84', '76', '85']
+
+
+    # '86','77','82','78', '87', '45', '48','40','90', '54',
+    shortest_path = ['100','4', '9', '5', '112', '34', '38', '35', '107','108','109', '52', '57', '49', '308', \
     '309', '310', '311', '312', '375', '376', '377', '378', '379', '380', '381', '382', '383', '384', \
     '385', '386', '387', '388', '389', '390', '391', '392', '393', '394', '395', '396', '397', '398', \
     '338', '339', '340', '341', '342', '305', '306', '307', '267', '268', '269', '270', '271', '272', \
@@ -151,13 +171,13 @@ def get_shortest_path():
     '131', '132', '133', '72', '75', '67', '95', '96', '97', '81', '84', '76', '85']
 
     log.info("Starting point is 82")
-    # log.info(f"Generated path is {shortest_path}")
+    log.info(f"Generated path is {shortest_path}")
 
     return shortest_path
 
 def frame_process(img):
     global frames, last_seen_label, turning_signs, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index
-    # log.info(f'Is processed frame with number: {frames}')
+    log.info(f'Is processed frame with number: {frames}')
 
     # get img width and height
     img_h, img_w, _ = img.shape
@@ -166,25 +186,28 @@ def frame_process(img):
 
     # Perform object detection using YOLOv5
     with torch.no_grad():
-        # results = predict(img)
-        results = model([img], device='0') #
+        results = model([img]) #
 
     # Draw the bounding boxes and class labels on the frame
-    for bbox in results:
-        boxes = bbox.boxes
-        for box_i in range(len(boxes)):
-            x_min, y_min, x_max, y_max = boxes.xyxy[box_i]
-
-            # calculate area of the box
-            box_area = (x_max - x_min) * (y_max - y_min)
+    # for bbox in results:
+    #     boxes = bbox.boxes
+        # for box_i in range(len(boxes)):
+            # x_min, y_min, x_max, y_max = boxes.xyxy[box_i]
+            # confidence = boxes.conf[box_i]
+            # label = boxes.cls[box_i]
+    for box in results['det']:
+        x_min, y_min, x_max, y_max, confidence, label = box
+        print(x_min, y_min, x_max, y_max, confidence, label)
+        # calculate area of the box
+        box_area = (x_max - x_min) * (y_max - y_min)
 
             confidence = boxes.conf[box_i]
             label = boxes.cls[box_i]
             if confidence > 0.5:
                 color = COLORS[int(label)]
                 label_class = CLASS_NAMES[int(label)]
-                # label = f"{CLASS_NAMES[int(label)]} {confidence:.2f}"
-                # log.info(f'Was detected: {label}')
+                label = f"{CLASS_NAMES[int(label)]} {confidence:.2f}"
+                log.info(f'Was detected: {label}')
                 if label in ['green_light','red_light', 'yellow_light']:
                     threshold = 0.005
                 else:
@@ -192,15 +215,15 @@ def frame_process(img):
                 if box_area>threshold*img_area and last_seen_label != label_class and label_class ==turning_signs[0]:
                     del turning_signs[0]
                     last_seen_label = label_class
-                    last_timestamp = time.time()
                     current_intersection_index+=1
                     current_index = shortest_path.index(intersection_to_go[current_intersection_index])
                     direction = get_turn_direction()
-                    # action = get_action(last_seen_label, direction)
+                    action = get_action(last_seen_label, direction)
                 cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
                 cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
     if time.time() - last_timestamp > 5:
         last_seen_label = 'random'
+        direction = ''
 
 
     car_offset, relative_angle, line_image = find_line_lane(frames, img)
@@ -210,7 +233,7 @@ def frame_process(img):
         # line_image = cv2.addWeighted(img, 0.8, prev_line, 1, 0)
         line_image = img
     else:
-        prev_offset = car_offset
+        prev_offset = car_offset 
         prev_angle = relative_angle
         # prev_line = line_image
 
@@ -222,8 +245,6 @@ def frame_process(img):
     # print("Frame: {}, Car offset: {}, Relative angle: {}".format(frame, car_offset, relative_angle))
 
 def predict(frame):
-    global compiled_model
-
     scale = 1280 / max(frame.shape)
     if scale < 1:
         frame = cv2.resize(
@@ -239,20 +260,15 @@ def predict(frame):
     # start_time = time.time()
     # model expects RGB image, while video capturing in BGR
     detections = detect(input_image[:, :, ::-1], compiled_model)[0]
-    return detections
     # stop_time = time.time()
 
-    # image_with_boxes = draw_results(detections, input_image, label_map)
+    image_with_boxes = draw_results(detections, input_image, label_map)
     
 def initialize_program():
     global model, device, compiled_model, shortest_path, intersection_to_go, turning_points, current_intersection_index, turning_signs, last_seen_label, last_timestamp, current_index, direction
 
     open_port()
     model = YOLO(PATH_TO_YOLO)
-
-    # if device != "CPU":
-    #     model.reshape({0: [1, 3, 640, 640]})
-    # compiled_model = core.compile_model(model, device)
 
     shortest_path = get_shortest_path()
     #intersections to pass through in calculated shortest path
@@ -292,7 +308,7 @@ def init_camera():
     return cap
 
 
-def line_process(live_camera = True, filepath = './files/record_2_real_track_left.avi'):
+def line_process(live_camera = True, filepath = './files/qualification_video2.mp4'):
     global frames, runtime, cap, left, res, img_w, img_h, img_area, prev_offset, prev_angle, prev_line, current_index, direction # TODO not sure if should remove something here
 
     if live_camera:
@@ -327,7 +343,7 @@ def line_process(live_camera = True, filepath = './files/record_2_real_track_lef
     else:
         # Get video capture
         cap = cv2.VideoCapture(filepath)
-        print('1')
+
         # If output_video is True, save results as video
         if output_video:
             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -408,23 +424,4 @@ def runVehicleListener():
 
 if __name__=="__main__":
     initialize_program()
-    runTrafficLightListener()
-    runVehicleListener()
-    beacon = 23456
-    id = 120
-    serverpublickey = 'publickey_livetraffic_server.pem'
-    clientprivatekey = 'privatekey_client.pem'
-    
-    gpsStR, gpsStS = Pipe(duplex = False)
-
-    envhandler = EnvironmentalHandler(id, beacon, serverpublickey, gpsStR, clientprivatekey)
-    envhandler.start()
-    time.sleep(5)
-    for x in range(1, 10):
-        time.sleep(random.uniform(1,5))
-        a = {"obstacle_id": int(random.uniform(0,25)), "x": random.uniform(0,15), "y": 			random.uniform(0,15)}
-        gpsStS.send(a)
-        
-    envhandler.stop()
-    envhandler.join()
-    line_process(live_camera = False)
+    line_process(live_camera = True)

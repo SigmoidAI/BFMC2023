@@ -1,0 +1,26 @@
+description: Ultralytics semifinal_model_1 model trained on data.yaml
+author: Ultralytics
+license: GPL-3.0 https://ultralytics.com/license
+version: 8.0.53
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 640
+- 640
+names:
+  0: crossed_highway_sign
+  1: green_light
+  2: highway_sign
+  3: no_entry_sign
+  4: one_way_road_sign
+  5: parking_sign
+  6: pedestrian_sign
+  7: priority_sign
+  8: red_light
+  9: roundabout_sign
+  10: stop_sign
+  11: yellow_light
+  12: car
+  13: pedestrian
+  14: roadblock

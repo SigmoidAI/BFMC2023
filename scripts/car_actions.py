@@ -16,57 +16,63 @@ def open_port():
 def change_car_speed(speed, time = 0):
     # should put global vars
     log.info("Changing car speed to " + str(speed))
-    pass
+    return "Changing car speed to " + str(speed)
+
 
 def car_change_direction(direction):
     log.info("Changing direction to " + direction)
-    pass
+    return "Changing direction to " + direction
 
 def do_parking():
     log.info("Parking the car in an empty parking lot")
-    pass
+    return "Parking the car in an empty parking lot"
 
 def do_roundabout_rotation(direction):
     log.info("Entering roundabout and rotating to " + direction)
-    pass
+    return "Entering roundabout and rotating to " + direction
 
 def change_lane(direction):
     log.info("Changing Lane to " + direction)
-    pass
+    return "Changing Lane to " + direction
 
 def get_action(last_seen_label, direction):
+    text = None
     if last_seen_label == 'crossed_highway_sign':
-        change_car_speed(speed = 1)
-        car_change_direction(direction)
+        text = change_car_speed(speed = 1)
+        # text+= '\n'+ car_change_direction(direction)
     elif last_seen_label == 'highway_sign':
-        change_car_speed(speed = 2)
+        text = change_car_speed(speed = 2)
     elif last_seen_label == 'green_light':
-        change_car_speed(speed = 1)
-        car_change_direction(direction)
+        text = change_car_speed(speed = 1)
+        text += '\n'+ car_change_direction(direction)
     elif last_seen_label == 'yellow_light':
-        change_car_speed(speed = 0.5)
+        text = change_car_speed(speed = 0.5)
     elif last_seen_label == 'red_light':
-        change_car_speed(speed = 0)
+        text = change_car_speed(speed = 0)
     elif last_seen_label == 'no_entry_sign':
-        pass
+        text = "seen no entry sign"
     elif last_seen_label == 'one_way_road_sign':
-        car_change_direction(direction)
+        text = None
+        # text = car_change_direction(direction)
     elif last_seen_label == 'parking_sign':
-        change_car_speed(speed = 0.5)
-        do_parking()
+        text = change_car_speed(speed = 0.5)
+        text += '\n'+ do_parking()
     elif last_seen_label == 'pedestrian_sign':
-        change_car_speed(speed = 0.5)
+        text = change_car_speed(speed = 0.5)
     elif last_seen_label == 'priority_sign':
-        car_change_direction(direction)
+        text = car_change_direction(direction)
     elif last_seen_label == 'roundabout_sign':
-        do_roundabout_rotation(direction = direction) # direction = 'left' or 'right' or 'straight'
-        car_change_direction(direction)
+        text = do_roundabout_rotation(direction = direction) # direction = 'left' or 'right' or 'straight'
+        text += '\n'+ car_change_direction(direction)
     elif last_seen_label == 'stop_sign':
-        change_car_speed(speed = 0, time=2) #change speed to stop only for 2 seconds
-        car_change_direction(direction)
+        text = change_car_speed(speed = 0, time=2) #change speed to stop only for 2 seconds
+        text += '\n'+ car_change_direction(direction)
     elif last_seen_label == 'pedestrian':
-        change_car_speed(speed = 0)
+        text = change_car_speed(speed = 0)
     elif last_seen_label == 'car':
-        pass
+        text = None
     elif last_seen_label == 'roadblock':
-        change_lane()
+        text = change_lane(direction)
+    elif last_seen_label == 'random':
+        text = None
+    return None, text
