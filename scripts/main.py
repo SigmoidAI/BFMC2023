@@ -119,8 +119,8 @@ def get_turn_direction():
             else:
                 direction = 'straight'
 
-            log.info('direction: ' + direction + ' angle: ' + str(angle) + ' sign: ' + last_seen_label)
-            log.info(DISPLAY_MESSAGE)
+            # log.info('direction: ' + direction + ' angle: ' + str(angle) + ' sign: ' + last_seen_label)
+            # log.info(DISPLAY_MESSAGE)
             return direction
 
     
@@ -160,14 +160,15 @@ def get_shortest_path():
     '140', '141', '137', '138', '16', '19', '17', '146', '25', '28', '22', '288', '289', '290', '291', '292', \
     '293', '294', '295', '296', '297', '298', '299', '300'] 
      
-    log.info(f"Starting point is {STARTING_NODE}")
-    log.info(f"Generated path is {shortest_path}")
+    # log.info(f"Starting point is {STARTING_NODE}")
+    # log.info(f"Generated path is {shortest_path}")
 
     return shortest_path
 
 def frame_process(img):
+    time1 = time.time()
     global frames, text, last_seen_label, turning_signs, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index
-    log.info(f'Is processed frame with number: {frames}')
+    # log.info(f'Is processed frame with number: {frames}')
 
     # get img width and height
     img_h, img_w, _ = img.shape
@@ -181,13 +182,15 @@ def frame_process(img):
     # Draw the bounding boxes and class labels on the frame
     # for bbox in results:
     #     boxes = bbox.boxes
-        # for box_i in range(len(boxes)):
-            # x_min, y_min, x_max, y_max = boxes.xyxy[box_i]
-            # confidence = boxes.conf[box_i]
-            # label = boxes.cls[box_i]
+    #     for box_i in range(len(boxes)):
+    #         x_min, y_min, x_max, y_max = boxes.xyxy[box_i]
+    #         confidence = boxes.conf[box_i]
+    #         label = boxes.cls[box_i]
+    #         box_area = (x_max - x_min) * (y_max - y_min)
+
     for box in results['det']:
         x_min, y_min, x_max, y_max, confidence, label = box
-        print(x_min, y_min, x_max, y_max, confidence, label)
+        # print(x_min, y_min, x_max, y_max, confidence, label)
         # calculate area of the box
         box_area = (x_max - x_min) * (y_max - y_min)
 
@@ -195,7 +198,7 @@ def frame_process(img):
             color = COLORS[int(label)]
             label_class = CLASS_NAMES[int(label)]
             label = f"{CLASS_NAMES[int(label)]} {confidence:.2f}"
-            log.info(f'Was detected: {label}')
+            # log.info(f'Was detected: {label}')
             if label in ['green_light','red_light', 'yellow_light']:
                 threshold = 0.005
             else:
@@ -210,8 +213,8 @@ def frame_process(img):
                 last_seen_label = label_class
                 action, text = get_action(last_seen_label, direction)
                 last_timestamp = time.time()
-            cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
-            cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            # cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
+            # cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
     if time.time() - last_timestamp > 5:
         last_seen_label = 'random'
         direction = ''
@@ -228,11 +231,15 @@ def frame_process(img):
         prev_angle = relative_angle
         prev_line = line_image
 
-    cv2.putText(line_image, text, (x,y), font, font_scale, (255, 0, 0), thickness)
-    cv2.putText(line_image, direction, (int(img_w/2), int(img_h/2) ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0, 2)
-    cv2.imshow('frame', cv2.resize(line_image, (720, 480)))
-    log.info(f'Car offset is {car_offset}')
-    log.info(f'Relative angle is {relative_angle}')
+    # cv2.putText(line_image, text, (x,y), font, font_scale, (255, 0, 0), thickness)
+    # cv2.putText(line_image, direction, (int(img_w/2), int(img_h/2) ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0, 2)
+    # cv2.imshow('frame', cv2.resize(line_image, (720, 480)))
+
+    time2 = time.time()
+    log.info(f'Frame processing took {1/(time2-time1)} gfgbngfbngdbngfbgf')
+
+    # log.info(f'Car offset is {car_offset}')
+    # log.info(f'Relative angle is {relative_angle}')
     # print("Frame: {}, Car offset: {}, Relative angle: {}".format(frame, car_offset, relative_angle))
 
 
@@ -240,7 +247,7 @@ def initialize_program():
     global model, shortest_path, intersection_to_go, turning_points, current_intersection_index, turning_signs, last_seen_label, last_timestamp, current_index, direction
 
     # open_port() #TODO
-    # model = YOLO(PATH_TO_YOLO)q
+    # model = YOLO(PATH_TO_YOLO)
     model_path = fr"./models/{MODEL_NAME}_openvino_int8_model/{MODEL_NAME}.xml"
     init_model(model_path)
 

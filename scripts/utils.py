@@ -247,15 +247,15 @@ def merge_lines_segments1(lines, use_log=False):
         #sort by y
         points = sorted(points, key=lambda point: point[1])
         
-        if use_log:
-            print("use y")
+        # if use_log:
+            # print("use y")
     else:
         
         #sort by x
         points = sorted(points, key=lambda point: point[0])
         
-        if use_log:
-            print("use x")
+        # if use_log:
+            # print("use x")
     
     return [points[0], points[len(points)-1]]
 
@@ -385,7 +385,7 @@ def find_line_lane(nr_frame, image):
 
     import os
     # show current path
-    print(os.getcwd())
+    # print(os.getcwd())
     if nr_frame % 10 == 0:
         # if nr_frame == 0:
         #     dereflected_frame = cv2.imread(r'./files/qualification_video/no_reflections_frames/0000.jpg')
@@ -415,8 +415,8 @@ def find_line_lane(nr_frame, image):
         # top_right = [imshape[1] / 2 + imshape[1] / 2.2, imshape[0] / 2.5 + imshape[0] / 10]
         lower_left = [0, imshape[0]]
         lower_right = [imshape[1], imshape[0]]
-        top_left = [imshape[1] / 2 - imshape[1] / 3, imshape[0] / 1.75 + imshape[0] / 10]
-        top_right = [imshape[1] / 2 + imshape[1] / 3, imshape[0] / 1.75 + imshape[0] / 10]
+        top_left = [imshape[1] / 2 - imshape[1] / 2.8, imshape[0] / 2 + imshape[0] / 10]
+        top_right = [imshape[1] / 2 + imshape[1] / 2.8, imshape[0] / 2 + imshape[0] / 10]
         
         # identify vertices
         vertices = [np.array([lower_left, top_left, top_right, lower_right], dtype=np.int32)]
