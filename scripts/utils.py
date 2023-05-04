@@ -543,7 +543,7 @@ point_to_sign = {
              'no_entry_sign':[468, 15, 16], # kinda nonsense?
              'priority_sign':[63, 23, 36, 41],
              'one_way_road_sign':[8, 7, 427], 
-             'stop_sign':[45, 54, 59, 61, 25, 72, 34, 467], 
+             'stop_sign':[45, 54, 59, 61, 25, 72, 467],  # 34
              'highway_sign':[49, 343],
              'crossed_highway_sign':[426, 374, 338], 
              'traffic_lights':[77, 4, 2, 6],

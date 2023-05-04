@@ -36,39 +36,43 @@ def change_lane(direction):
     return "Changing Lane to " + direction
 
 def get_action(last_seen_label, direction):
+    text = None
     if last_seen_label == 'crossed_highway_sign':
         text = change_car_speed(speed = 1)
-        text+=car_change_direction(direction)
+        # text+= '\n'+ car_change_direction(direction)
     elif last_seen_label == 'highway_sign':
         text = change_car_speed(speed = 2)
     elif last_seen_label == 'green_light':
         text = change_car_speed(speed = 1)
-        text += car_change_direction(direction)
+        text += '\n'+ car_change_direction(direction)
     elif last_seen_label == 'yellow_light':
         text = change_car_speed(speed = 0.5)
     elif last_seen_label == 'red_light':
         text = change_car_speed(speed = 0)
     elif last_seen_label == 'no_entry_sign':
-        pass
+        text = "seen no entry sign"
     elif last_seen_label == 'one_way_road_sign':
-        text = car_change_direction(direction)
+        text = None
+        # text = car_change_direction(direction)
     elif last_seen_label == 'parking_sign':
         text = change_car_speed(speed = 0.5)
-        text += do_parking()
+        text += '\n'+ do_parking()
     elif last_seen_label == 'pedestrian_sign':
         text = change_car_speed(speed = 0.5)
     elif last_seen_label == 'priority_sign':
         text = car_change_direction(direction)
     elif last_seen_label == 'roundabout_sign':
         text = do_roundabout_rotation(direction = direction) # direction = 'left' or 'right' or 'straight'
-        text += car_change_direction(direction)
+        text += '\n'+ car_change_direction(direction)
     elif last_seen_label == 'stop_sign':
         text = change_car_speed(speed = 0, time=2) #change speed to stop only for 2 seconds
-        text += car_change_direction(direction)
+        text += '\n'+ car_change_direction(direction)
     elif last_seen_label == 'pedestrian':
         text = change_car_speed(speed = 0)
     elif last_seen_label == 'car':
-        pass
+        text = None
     elif last_seen_label == 'roadblock':
-        change_lane()
+        text = change_lane(direction)
+    elif last_seen_label == 'random':
+        text = None
     return None, text

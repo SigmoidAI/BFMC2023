@@ -21,8 +21,8 @@ NODES_TO_VISIT = ['78', '40', '105','113', '111', '71', '62']
 PATH_TO_GRAPHML = r'./files/Competition_track.graphml'
 PATH_TO_YOLO = r'./models/semifinal_model_1.pt'   #r'./models/best_based_on_8n.pt'
 MODEL_NAME = 'semifinal_model_1'
-PATH_TO_VIDEO = r'files\real_track_5_left.avi'
-FRAME_FREQUENCY = 2
+PATH_TO_VIDEO = r'files\real_track_11_right.avi'
+FRAME_FREQUENCY = 3
 CLASS_NAMES = ['crossed_highway_sign', 'green_light', 'highway_sign', 'no_entry_sign','one_way_road_sign', 'parking_sign','pedestrian_sign', 'priority_sign', 'red_light', 'roundabout_sign','stop_sign', 'yellow_light', 'car', 'pedestrian', 'roadblock']
 COLORS = [(92,164,100),(0,255,0),(65,174,68), (51,51,255),(255,0,0), (204,0,0),(255,153,51),(51,255,255),(0,0,255), (192,192,192),(0,0,204), (0,255,255),(0,0,0), (204,229,255),(0,128,255)]
 DISPLAY_MESSAGE = ["CROSSED HIGHWAY, SPEED 1", 'GO', 'HIGHWAY, SPEED 2', 'NO ENTRY','ONE WAY ROAD', 'DO PARKING, SPEED 0.5','CROSSWALK, LOOK OUT, SPEED 0.5', 'PRIORITY', 'RED LIGHT, STOP', 'ROUNDABOUT','STOP', 'YELLOW, wait', 'CAR', 'PEDESTRIAN', 'OBSTACLE!']
@@ -146,7 +146,9 @@ def get_shortest_path():
     # '188', '189', '190', '191', '192', '193', '194', '195', '196', '197', '63', '66', '58', '129', '130', \
     # '131', '132', '133', '72', '75', '67', '95', '96', '97', '81', '84', '76', '85']
 
-    shortest_path = ['86','77','82','78', '87', '45', '48','40','90', '54', '57', '49', '308', \
+
+    # '86','77','82','78', '87', '45', '48','40','90', '54',
+    shortest_path = ['100','4', '9', '5', '112', '34', '38', '35', '107','108','109', '52', '57', '49', '308', \
     '309', '310', '311', '312', '375', '376', '377', '378', '379', '380', '381', '382', '383', '384', \
     '385', '386', '387', '388', '389', '390', '391', '392', '393', '394', '395', '396', '397', '398', \
     '338', '339', '340', '341', '342', '305', '306', '231', '232', '233', '234', '235', '236', \
@@ -197,19 +199,22 @@ def frame_process(img):
             if label in ['green_light','red_light', 'yellow_light']:
                 threshold = 0.005
             else:
-                threshold = 0.0025
-            if box_area>threshold*img_area and last_seen_label != label_class and label_class ==turning_signs[0]:
-                del turning_signs[0]
+                threshold = 0.0035
+            if box_area>threshold*img_area and last_seen_label != label_class:
+                if label_class ==turning_signs[0]:
+                    del turning_signs[0]
+                    last_seen_label = label_class
+                    current_intersection_index+=1
+                    current_index = shortest_path.index(intersection_to_go[current_intersection_index])
+                    direction = get_turn_direction()
                 last_seen_label = label_class
-                last_timestamp = time.time()
-                current_intersection_index+=1
-                current_index = shortest_path.index(intersection_to_go[current_intersection_index])
-                direction = get_turn_direction()
                 action, text = get_action(last_seen_label, direction)
+                last_timestamp = time.time()
             cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
             cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
     if time.time() - last_timestamp > 5:
         last_seen_label = 'random'
+        direction = ''
 
 
     car_offset, relative_angle, line_image = find_line_lane(frames, img)
