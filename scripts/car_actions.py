@@ -10,44 +10,45 @@ log = logging.getLogger(__name__)
 
 def open_port():
     global ser
-    ser = serial.Serial('/dev/ttyACM0', 115200) # Open serial port at 9600 bps
+    ser = serial.Serial('/dev/ttyACM0', 9600) # Open serial port at 9600 bps
     ser.flushInput()
 
-
-# ser.write(b'S')
-
 def change_car_speed(speed, time = 0):
-    # global ser
-    # if speed==2:
-    #     ser.write(b'o')
-    # elif speed==1:
-    #     ser.write(b'F')
-    # elif speed==0:
-    #     ser.write(b'f')
+    global ser
+    if ser:
+        if speed==2:
+            ser.write(b'o')
+        elif speed==1:
+            ser.write(b'F')
+        elif speed==0.5:
+            ser.write(b'f')
     return "Changing car speed to " + str(speed)
 
 
 def car_change_direction(direction):
-    # global ser
-    # if direction=='left': #forward left
-    #     ser.write(b'G')
-    # elif direction=='right': # forward right
-    #     ser.write(b'I')
-    # elif direction=='straight':
-    #     ser.write(b'f')
+    global ser
+    if ser:
+        if direction=='left': #forward left
+            ser.write(b'G')
+        elif direction=='right': # forward right
+            ser.write(b'I')
+        elif direction=='straight':
+            ser.write(b'f')
     # log.info("Changing direction to " + direction)
     return "Changing direction to " + direction
 
 def car_change_rotation(angle):
     global ser
-    # ser.write(b'')
+    if ser:
+        ser.write(str(angle))
     # log.info("Changing rotation to " + angle)
     return "Changing rotation to " + str(angle)
 
 def do_parking():
     global ser
     # log.info("Parking the car in an empty parking lot")
-    # ser.write(b'p')
+    if ser:
+        ser.write(b'p')
     return "Parking the car in an empty parking lot"
 
 def do_roundabout_rotation(direction):

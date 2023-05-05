@@ -69,14 +69,14 @@ def draw_lines(image, lines, color=(255, 0, 0), thickness=10):
             first_shape = min(y1, y2, first_shape)
     if (len(left_lane) == 0) or (len(right_lane) == 0):
         # log.info('No lane detected')
-        return 1, 1
+        return 1, 1, 0
     slope_mean_left = np.mean(left_slope, axis=0)
     slope_mean_right = np.mean(right_slope, axis=0)
     mean_left = np.mean(np.array(left_lane), axis=0)
     mean_right = np.mean(np.array(right_lane), axis=0)
     if (slope_mean_left == 0) or (slope_mean_right == 0):
         # print('Not possible dividing by zero')
-        return 1, 1
+        return 1, 1, 0
 
         
     
@@ -115,7 +115,7 @@ def draw_lines(image, lines, color=(255, 0, 0), thickness=10):
     cv2.line(image, (int(new_image[0]), int(new_image[1])), (int(new_image[2]), int(new_image[3])), color, thickness)
     cv2.line(image, (int(new_image[4]), int(new_image[5])), (int(new_image[6]), int(new_image[7])), color, thickness)
     cv2.circle(image, (int(x_middle), image.shape[0] - 20), radius=10, color=(0, 255, 0), thickness=-1)
-    return car_offset, angle
+    return car_offset, angle, x_middle
 
 
 # to make lines out of identified edges
@@ -132,8 +132,8 @@ def get_hough_lines(image, rho, theta, treshold, min_line_len, max_line_gap):
         merged_lines.append([[line[0][0], line[0][1], line[1][0], line[1][1]]])
     merged_lines = np.array(merged_lines)
     # here the merge for multiple lines is run and I output their coordinates
-    car_offset, angle = draw_lines(line_img, merged_lines)
-    return line_img, car_offset, angle
+    car_offset, angle, x_middle = draw_lines(line_img, merged_lines)
+    return line_img, car_offset, angle, x_middle
 
 # here starts code for line merging
 def get_lines(lines_in):
@@ -378,7 +378,7 @@ def find_line_lane(nr_frame, image):
     t_image = cv2.bitwise_and(image, copy_image, mask=mask)
     # print(image.shape)
     # print(image)
-    cv2.imshow('line_lane_func', t_image)
+    # cv2.imshow('line_lane_func', t_image)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
@@ -431,12 +431,12 @@ def find_line_lane(nr_frame, image):
         
         # get region of interest image
         roi_image = get_region_of_interest(canny_edges, vertices)
-        cv2.imshow('roi_image', roi_image)
+        # cv2.imshow('roi_image', roi_image)
         theta = np.pi / 180
 
-        line_image, car_offset, angle = get_hough_lines(roi_image, 4, theta, 120, 20, 70)
+        line_image, car_offset, angle, x_middle = get_hough_lines(roi_image, 4, theta, 120, 20, 70)
         if (car_offset == 1) and (angle == 1):
-            return -1, -1, -1
+            return -1, -1, -1, 0
         relative_angle = (angle - car_direction) * 180 / np.pi
         results = cv2.addWeighted(image, 0.8, line_image, 1, 0)
         old_line_image = line_image
@@ -447,8 +447,8 @@ def find_line_lane(nr_frame, image):
             results = cv2.addWeighted(image, 0.8, old_line_image, 1, 0)
         except:
             results = image.copy()
-        return old_car_offset, old_angle, results
-    return car_offset, relative_angle, results
+        return old_car_offset, old_angle, results, 0
+    return car_offset, relative_angle, results, x_middle
 
 
 
