@@ -23,6 +23,10 @@ def car_change_direction(direction):
     # log.info("Changing direction to " + direction)
     return "Changing direction to " + direction
 
+def car_change_rotation(angle):
+    # log.info("Changing rotation to " + angle)
+    return "Changing rotation to " + str(angle)
+
 def do_parking():
     # log.info("Parking the car in an empty parking lot")
     return "Parking the car in an empty parking lot"
@@ -35,8 +39,11 @@ def change_lane(direction):
     # log.info("Changing Lane to " + direction)
     return "Changing Lane to " + direction
 
-def get_action(last_seen_label, direction):
+def get_action(last_seen_label, direction, relative_angle):
     text = None
+
+
+
     if last_seen_label == 'crossed_highway_sign':
         text = change_car_speed(speed = 1)
         # text+= '\n'+ car_change_direction(direction)
@@ -75,4 +82,5 @@ def get_action(last_seen_label, direction):
         text = change_lane(direction)
     elif last_seen_label == 'random':
         text = None
+
     return None, text

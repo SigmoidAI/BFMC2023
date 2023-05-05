@@ -11,6 +11,7 @@ from frr import FastReflectionRemoval
 import logging
 import networkx as nx
 
+LINES_RATE = 3
 
 log_format = '%(asctime)s - [%(levelname)s] [%(module)s.%(funcName)s:%(lineno)d]: %(message)s'
 logging.basicConfig(format=log_format, level=logging.INFO)
@@ -386,7 +387,7 @@ def find_line_lane(nr_frame, image):
     import os
     # show current path
     # print(os.getcwd())
-    if nr_frame % 10 == 0:
+    if nr_frame % LINES_RATE == 0:
         # if nr_frame == 0:
         #     dereflected_frame = cv2.imread(r'./files/qualification_video/no_reflections_frames/0000.jpg')
         # elif nr_frame < 100:
@@ -413,17 +414,17 @@ def find_line_lane(nr_frame, image):
         # lower_right = [imshape[1], imshape[0] - ]
         # top_left = [imshape[1] / 2 - imshape[1] / 2.2, imshape[0] / 2.5 + imshape[0] / 10]
         # top_right = [imshape[1] / 2 + imshape[1] / 2.2, imshape[0] / 2.5 + imshape[0] / 10]
-        lower_left = [0, imshape[0]]
-        lower_right = [imshape[1], imshape[0]]
-        top_left = [imshape[1] / 2 - imshape[1] / 2.8, imshape[0] / 2 + imshape[0] / 10]
-        top_right = [imshape[1] / 2 + imshape[1] / 2.8, imshape[0] / 2 + imshape[0] / 10]
+        lower_left = [0+imshape[1]/10, imshape[0]]
+        lower_right = [imshape[1]-imshape[1]/10, imshape[0]]
+        top_left = [imshape[1] / 2 - imshape[1] / 4, imshape[0] / 2 + imshape[0] / 6]
+        top_right = [imshape[1] / 2 + imshape[1] / 4, imshape[0] / 2 + imshape[0] / 6]
         
         # identify vertices
         vertices = [np.array([lower_left, top_left, top_right, lower_right], dtype=np.int32)]
         
         # get region of interest image
         roi_image = get_region_of_interest(canny_edges, vertices)
-        
+        cv2.imshow('roi_image', roi_image)
         theta = np.pi / 180
 
         line_image, car_offset, angle = get_hough_lines(roi_image, 4, theta, 120, 20, 70)
@@ -483,9 +484,9 @@ sign_dict = {'parking_sign': [181, 177, 162, 165],
              'no_entry_sign':[468, 15, 16], # kinda nonsense?
              'priority_sign':[63, 23, 36, 41],
              'one_way_road_sign':[8, 7, 426], 
-             'stop_sign':[45, 54, 59, 61, 25, 72, 34, 467], 
+             'stop_sign':[45, 54, 59, 61, 25, 72,  467],   # 34,
              'highway_sign':[49, 343],
-             'crossed_highway_sign':[311, 374, 338], 
+             'crossed_highway_sign':[426, 374, 338], 
              'traffic_lights':[77, 4, 2, 6],
              'blockade':[141]}
 
@@ -514,18 +515,19 @@ point_to_sign = {
     41: 'priority_sign',
     8: 'one_way_road_sign',
     7: 'one_way_road_sign',
-    426: 'one_way_road_sign',
+    427: 'one_way_road_sign',
     45: 'stop_sign',
     54: 'stop_sign',
     59: 'stop_sign',
     61: 'stop_sign',
     25: 'stop_sign',
     72: 'stop_sign',
-    34: 'stop_sign',
+    # 34: 'stop_sign',
     467: 'stop_sign',
     49: 'highway_sign',
     343: 'highway_sign',
-    311: 'crossed_highway_sign',
+    426: 'crossed_highway_sign',
+
     374: 'crossed_highway_sign',
     338: 'crossed_highway_sign',
     77: 'green_light',
@@ -535,19 +537,6 @@ point_to_sign = {
     141: 'blockade'
 }
 
-
-
-{'parking_sign': [181, 177, 162, 165], 
-             'pedestrian_sign': [171, 265, 295, 276, 92, 95], 
-             'roundabout_sign': [230, 301, 342], 
-             'no_entry_sign':[468, 15, 16], # kinda nonsense?
-             'priority_sign':[63, 23, 36, 41],
-             'one_way_road_sign':[8, 7, 427], 
-             'stop_sign':[45, 54, 59, 61, 25, 72, 467],  # 34
-             'highway_sign':[49, 343],
-             'crossed_highway_sign':[426, 374, 338], 
-             'traffic_lights':[77, 4, 2, 6],
-             'blockade':[141]}
 
 # should think do I put them like what I should see, or really where they are as it is
 

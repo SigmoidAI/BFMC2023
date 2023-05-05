@@ -14,7 +14,7 @@ import torch
 from car_actions import *
 import trafficlights
 import vehicletovehicle
-from livetraffic.livetraffic import *
+# from livetraffic.livetraffic import *
 import threading
 # from test_quantized_model import *
 
@@ -57,6 +57,7 @@ direction = 'None'
 shortest_path = []
 intersection_to_go = []
 turning_signs = []
+signs_indexes_on_the_path = []
 G = None
 frames = 0
 last_timestamp = 0
@@ -174,17 +175,17 @@ def get_shortest_path():
 
 def frame_process(img):
     time1 = time.time()
-    global frames, text, last_seen_label, turning_signs, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index
+    global frames, text, last_seen_label, turning_signs, signs_indexes_on_the_path, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index
     # log.info(f'Is processed frame with number: {frames}')
 
     # get img width and height
     img_h, img_w, _ = img.shape
     img_area = img_h * img_w
-    print(img_area)
-
+    label_class = None
     # Perform object detection using YOLOv5
     with torch.no_grad():
-        results = model([img]) #
+        # results = model([img]) #
+        results = predict(img)
 
     # Draw the bounding boxes and class labels on the frame
     # for bbox in results:
@@ -207,24 +208,26 @@ def frame_process(img):
             label = f"{CLASS_NAMES[int(label)]} {confidence:.2f}"
             # log.info(f'Was detected: {label}')
             if label in ['green_light','red_light', 'yellow_light']:
-                threshold = 0.005
+                threshold = 0.006
             else:
                 threshold = 0.0035
             if box_area>threshold*img_area and last_seen_label != label_class:
-                if label_class ==turning_signs[0]:
-                    del turning_signs[0]
-                    last_seen_label = label_class
-                    current_intersection_index+=1
-                    current_index = shortest_path.index(intersection_to_go[current_intersection_index])
-                    direction = get_turn_direction()
                 last_seen_label = label_class
-                action, text = get_action(last_seen_label, direction)
                 last_timestamp = time.time()
-            # cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
-            # cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-    if time.time() - last_timestamp > 5:
-        last_seen_label = 'random'
-        direction = ''
+                if label_class == signs_indexes_on_the_path[0] and label_class not in ['car'] :
+                    del signs_indexes_on_the_path[0]
+                    if label_class ==turning_signs[0]:
+                        del turning_signs[0]
+                        # last_seen_label = label_class
+                        current_intersection_index+=1
+                        current_index = shortest_path.index(intersection_to_go[current_intersection_index])
+                        direction = get_turn_direction()
+                    action, text = get_action(last_seen_label, direction)
+                    last_timestamp = time.time()
+
+            cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
+            cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
 
 
     car_offset, relative_angle, line_image = find_line_lane(frames, img)
@@ -236,41 +239,29 @@ def frame_process(img):
     else:
         prev_offset = car_offset 
         prev_angle = relative_angle
-        # prev_line = line_image
+        prev_line = line_image
 
-    # cv2.putText(line_image, text, (x,y), font, font_scale, (255, 0, 0), thickness)
-    # cv2.putText(line_image, direction, (int(img_w/2), int(img_h/2) ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0, 2)
-    # cv2.imshow('frame', cv2.resize(line_image, (720, 480)))
+    car_change_rotation(relative_angle)
+
+
+    if time.time() - last_timestamp > 5:
+        last_seen_label = 'random'
+        direction = ''
+
+    cv2.putText(line_image, text, (x,y), font, font_scale, (255, 0, 0), thickness)
+    cv2.putText(line_image, direction, (int(img_w/2), int(img_h/2) ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0, 2)
+    cv2.imshow('frame', cv2.resize(line_image, (720, 480)))
 
     time2 = time.time()
-    log.info(f'Frame processing took {1/(time2-time1)} gfgbngfbngdbngfbgf')
+    # log.info(f'Frame processing took {1/(time2-time1)} gfgbngfbngdbngfbgf')
 
     # log.info(f'Car offset is {car_offset}')
     # log.info(f'Relative angle is {relative_angle}')
     # print("Frame: {}, Car offset: {}, Relative angle: {}".format(frame, car_offset, relative_angle))
 
-def predict(frame):
-    scale = 1280 / max(frame.shape)
-    if scale < 1:
-        frame = cv2.resize(
-            src=frame,
-            dsize=None,
-            fx=scale,
-            fy=scale,
-            interpolation=cv2.INTER_AREA,
-        )
-    # Get the results.
-    input_image = np.array(frame)
 
-    # start_time = time.time()
-    # model expects RGB image, while video capturing in BGR
-    detections = detect(input_image[:, :, ::-1], compiled_model)[0]
-    # stop_time = time.time()
-
-    image_with_boxes = draw_results(detections, input_image, label_map)
-    
 def initialize_program():
-    global model, device, compiled_model, shortest_path, intersection_to_go, turning_points, current_intersection_index, turning_signs, last_seen_label, last_timestamp, current_index, direction
+    global model, shortest_path, intersection_to_go, turning_points, current_intersection_index, turning_signs, signs_indexes_on_the_path, last_seen_label, last_timestamp, current_index, direction
 
     # open_port() #TODO
     # model = YOLO(PATH_TO_YOLO)
@@ -284,6 +275,7 @@ def initialize_program():
     intersection_to_go = delete_other_roundabout_intersections(intersection_to_go)
 
     signs_on_the_path = [x for x in shortest_path if point_to_sign.get(int(x))]
+    signs_indexes_on_the_path = [point_to_sign.get(int(x)) for x in shortest_path if point_to_sign.get(int(x))]
     turning_points = [x for x in signs_on_the_path if x not in ['49','338', '171', '265', '295', '276', '92', '95','8' '7' '427','468', '15', '16','181', '177', '162', '165']]
     if '311' in turning_points and go_to_old_road==False:
         turning_points.remove('311')
@@ -316,7 +308,7 @@ def init_camera():
     return cap
 
 
-def line_process(live_camera = True, filepath = './files/qualification_video2.mp4'):
+def line_process(live_camera = True):
     global frames, runtime, cap, left, res, img_w, img_h, img_area, prev_offset, prev_angle, prev_line, current_index, direction # TODO not sure if should remove something here
 
     if live_camera:
@@ -350,7 +342,7 @@ def line_process(live_camera = True, filepath = './files/qualification_video2.mp
 
     else:
         # Get video capture
-        cap = cv2.VideoCapture(filepath)
+        cap = cv2.VideoCapture(PATH_TO_VIDEO)
 
         # If output_video is True, save results as video
         if output_video:
@@ -361,22 +353,19 @@ def line_process(live_camera = True, filepath = './files/qualification_video2.mp
 
         # Loop through video frames
         while True:
-            print('ye')
             ret, img = cap.read()
             if not ret:
                 break
             frames += 1
             if frames%FRAME_FREQUENCY == 0:
                 img = frame_process(img)
-                print('processed')
 
                 if output_video:
                     out.write(img)
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                cap.release()
                 break
             
-        cap.release()
+    cap.release()
     if output_video:
         out.release()
     cv2.destroyAllWindows()
@@ -432,23 +421,23 @@ def runVehicleListener():
 
 if __name__=="__main__":
     initialize_program()
-    runTrafficLightListener()
-    runVehicleListener()
-    beacon = 23456
-    id = 120
-    serverpublickey = 'publickey_livetraffic_server.pem'
-    clientprivatekey = 'privatekey_client.pem'
+    # runTrafficLightListener()
+    # runVehicleListener()
+    # beacon = 23456
+    # id = 120
+    # serverpublickey = 'publickey_livetraffic_server.pem'
+    # clientprivatekey = 'privatekey_client.pem'
     
-    gpsStR, gpsStS = Pipe(duplex = False)
+    # gpsStR, gpsStS = Pipe(duplex = False)
 
-    envhandler = EnvironmentalHandler(id, beacon, serverpublickey, gpsStR, clientprivatekey)
-    envhandler.start()
-    time.sleep(5)
-    for x in range(1, 10):
-        time.sleep(random.uniform(1,5))
-        a = {"obstacle_id": int(random.uniform(0,25)), "x": random.uniform(0,15), "y": 			random.uniform(0,15)}
-        gpsStS.send(a)
+    # envhandler = EnvironmentalHandler(id, beacon, serverpublickey, gpsStR, clientprivatekey)
+    # envhandler.start()
+    # time.sleep(5)
+    # for x in range(1, 10):
+    #     time.sleep(random.uniform(1,5))
+    #     a = {"obstacle_id": int(random.uniform(0,25)), "x": random.uniform(0,15), "y": 			random.uniform(0,15)}
+    #     gpsStS.send(a)
         
-    envhandler.stop()
-    envhandler.join()
-    line_process(live_camera = True)
+    # envhandler.stop()
+    # envhandler.join()
+    line_process(live_camera = False)
