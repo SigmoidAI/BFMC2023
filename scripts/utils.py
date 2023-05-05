@@ -491,7 +491,7 @@ sign_dict = {'parking_sign': [181, 177, 162, 165],
              'no_entry_sign':[468, 15, 16], # kinda nonsense?
              'priority_sign':[63, 23, 36, 41],
              'one_way_road_sign':[8, 7, 426], 
-             'stop_sign':[45, 54, 59, 61, 25, 72,  467],   # 34,
+             'stop_sign':[45, 54, 59, 61, 25, 72, 34, 467],   # 
              'highway_sign':[49, 343],
              'crossed_highway_sign':[426, 374, 338], 
              'traffic_lights':[77, 4, 2, 6],
@@ -529,12 +529,11 @@ point_to_sign = {
     61: 'stop_sign',
     25: 'stop_sign',
     72: 'stop_sign',
-    # 34: 'stop_sign',
+    34: 'stop_sign',
     467: 'stop_sign',
     49: 'highway_sign',
     343: 'highway_sign',
     426: 'crossed_highway_sign',
-
     374: 'crossed_highway_sign',
     338: 'crossed_highway_sign',
     77: 'green_light',
