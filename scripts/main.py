@@ -58,6 +58,7 @@ shortest_path = []
 intersection_to_go = []
 turning_signs = []
 signs_indexes_on_the_path = []
+angle_values = [0, 0, 0, 0, 0]
 G = None
 frames = 0
 last_timestamp = 0
@@ -173,9 +174,27 @@ def get_shortest_path():
 
     return shortest_path
 
+def get_global_angle(weight):
+    global angle_values
+    # Ensure the weight is in the range [0, 1]
+    weight = max(0, min(weight, 1))
+
+    # Calculate the remaining weight and the decay factor
+    remaining_weight = 1 - weight
+    decay_factor = 0.5
+
+    # Calculate the exponential decay for each of the other angles
+    num_angles = len(angle_values)
+    weights = [remaining_weight * (decay_factor ** (num_angles - 1 - i)) for i in range(num_angles - 1)] + [weight]
+
+    # Compute the global angle as the weighted sum of the angles
+    global_angle = sum(angle * weight for angle, weight in zip(angle_values, weights))
+
+    return global_angle
+
 def frame_process(img):
     time1 = time.time()
-    global frames, text, last_seen_label, turning_signs, signs_indexes_on_the_path, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index
+    global frames, text, last_seen_label, turning_signs, signs_indexes_on_the_path, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index, angle_values
     # log.info(f'Is processed frame with number: {frames}')
 
     # get img width and height
@@ -241,7 +260,11 @@ def frame_process(img):
         prev_angle = relative_angle
         prev_line = line_image
 
-    car_change_rotation(relative_angle)
+    # add the relative angle to the end of the list of angles and push out the first one
+    angle_values = angle_values[1:] + [relative_angle]
+    global_angle = get_global_angle(weight=0.8)
+    log.info(f'Global angle is {angle_values}')
+    car_change_rotation(global_angle)
 
 
     if time.time() - last_timestamp > 5:

@@ -378,7 +378,7 @@ def find_line_lane(nr_frame, image):
     t_image = cv2.bitwise_and(image, copy_image, mask=mask)
     # print(image.shape)
     # print(image)
-    cv2.imshow('line_lane_func', t_image)
+    # cv2.imshow('line_lane_func', t_image)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
