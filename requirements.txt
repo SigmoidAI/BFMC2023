@@ -8,3 +8,4 @@ ultralytics==8.0.52
 torch==1.12.0
 torchvision==0.13.0
 pyserial==3.5
+openvino==2022.3.0
