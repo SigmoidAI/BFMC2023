@@ -364,19 +364,21 @@ def remove_reflection(image):
 
 
 def find_line_lane(nr_frame, image):
-    # transform to gray scale and hue scale
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blur_gray_image = cv2.GaussianBlur(gray_image, (5, 5), 3)
+    #remove the upper half of the image and make it full black
+    copy_image = image.copy()
+    copy_image[0:360, 0:1280] = [0, 0, 0]
+    #raise the brightness of the image
+    copy_image = cv2.convertScaleAbs(copy_image, alpha=1.5, beta=0)
 
     # this version, hsv mask
-    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    hsv_image = cv2.cvtColor(copy_image, cv2.COLOR_BGR2HSV)
     lower_white = np.array([0, 0, bright_high], dtype=np.uint8)
     upper_white = np.array([80, 80, 255], dtype=np.uint8)
     mask = cv2.inRange(hsv_image, lower_white, upper_white)
-    t_image = cv2.bitwise_and(image, image, mask=mask)
+    t_image = cv2.bitwise_and(image, copy_image, mask=mask)
     # print(image.shape)
     # print(image)
-    # cv2.imshow('img', image)
+    cv2.imshow('line_lane_func', t_image)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
@@ -414,11 +416,16 @@ def find_line_lane(nr_frame, image):
         # lower_right = [imshape[1], imshape[0] - ]
         # top_left = [imshape[1] / 2 - imshape[1] / 2.2, imshape[0] / 2.5 + imshape[0] / 10]
         # top_right = [imshape[1] / 2 + imshape[1] / 2.2, imshape[0] / 2.5 + imshape[0] / 10]
-        lower_left = [0+imshape[1]/10, imshape[0]]
-        lower_right = [imshape[1]-imshape[1]/10, imshape[0]]
-        top_left = [imshape[1] / 2 - imshape[1] / 4, imshape[0] / 2 + imshape[0] / 6]
-        top_right = [imshape[1] / 2 + imshape[1] / 4, imshape[0] / 2 + imshape[0] / 6]
-        
+        # Change these values to control the top and bottom width and height of the ROI
+        top_width_factor = 0.6  # Change this value to control the width of the top side of the trapezoid
+        bottom_width_factor = 0.9  # Change this value to control the width of the bottom side of the trapezoid
+        height_factor = 0.2  # Change this value to control the height of the trapezoid
+
+        lower_left = [imshape[1] * (1 - bottom_width_factor) / 2, imshape[0]]
+        lower_right = [imshape[1] - imshape[1] * (1 - bottom_width_factor) / 2, imshape[0]]
+        top_left = [imshape[1] / 2 - imshape[1] * top_width_factor / 2, imshape[0] * (1 - height_factor)]
+        top_right = [imshape[1] / 2 + imshape[1] * top_width_factor / 2, imshape[0] * (1 - height_factor)]
+
         # identify vertices
         vertices = [np.array([lower_left, top_left, top_right, lower_right], dtype=np.int32)]
         
