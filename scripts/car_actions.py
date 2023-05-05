@@ -17,9 +17,7 @@ def open_port():
 # ser.write(b'S')
 
 def change_car_speed(speed, time = 0):
-    global ser
-    # should put global vars
-    # log.info("Changing car speed to " + str(speed))
+    # global ser
     # if speed==2:
     #     ser.write(b'o')
     # elif speed==1:
@@ -30,10 +28,19 @@ def change_car_speed(speed, time = 0):
 
 
 def car_change_direction(direction):
+    # global ser
+    # if direction=='left': #forward left
+    #     ser.write(b'G')
+    # elif direction=='right': # forward right
+    #     ser.write(b'I')
+    # elif direction=='straight':
+    #     ser.write(b'f')
     # log.info("Changing direction to " + direction)
     return "Changing direction to " + direction
 
 def car_change_rotation(angle):
+    global ser
+    # ser.write(b'')
     # log.info("Changing rotation to " + angle)
     return "Changing rotation to " + str(angle)
 
