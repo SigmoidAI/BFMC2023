@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from utils import find_line_lane, shortest_path_without_weights, intersections, point_to_sign
-from openvino_detection import init_model, predict
+#from openvino_detection import init_model, predict
 import logging
 import json
 import time
@@ -26,8 +26,8 @@ NODES_TO_VISIT = ['78', '40', '105','113', '111', '71', '62']
 PATH_TO_GRAPHML = r'./files/Competition_track.graphml'
 PATH_TO_YOLO = r'./models/semifinal_model_2.pt'   #r'./models/best_based_on_8n.pt'
 MODEL_NAME = 'semifinal_model_1'
-PATH_TO_VIDEO = r'files\semi_final_track_1_right.avi'
-FRAME_FREQUENCY = 30
+PATH_TO_VIDEO = r'files/semi_final_track_1_right.avi'
+FRAME_FREQUENCY = 10
 CLASS_NAMES = ['crossed_highway_sign', 'green_light', 'highway_sign', 'no_entry_sign','one_way_road_sign', 'parking_sign','pedestrian_sign', 'priority_sign', 'red_light', 'roundabout_sign','stop_sign', 'yellow_light', 'car', 'pedestrian', 'roadblock']
 COLORS = [(92,164,100),(0,255,0),(65,174,68), (51,51,255),(255,0,0), (204,0,0),(255,153,51),(51,255,255),(0,0,255), (192,192,192),(0,0,204), (0,255,255),(0,0,0), (204,229,255),(0,128,255)]
 DISPLAY_MESSAGE = ["CROSSED HIGHWAY, SPEED 1", 'GO', 'HIGHWAY, SPEED 2', 'NO ENTRY','ONE WAY ROAD', 'DO PARKING, SPEED 0.5','CROSSWALK, LOOK OUT, SPEED 0.5', 'PRIORITY', 'RED LIGHT, STOP', 'ROUNDABOUT','STOP', 'YELLOW, wait', 'CAR', 'PEDESTRIAN', 'OBSTACLE!']
@@ -38,6 +38,7 @@ thickness = 2
 
 # Set the text to be written
 text = "Hello, World!"
+action=None
 
 # Set the position of the text
 x = 50
@@ -199,8 +200,8 @@ def transform_value(old_value, old_min=400, old_max=780, new_min=1, new_max=9):
 
 def frame_process(img):
     # img = cv2.resize(img, (360,640))
-    # time1 = time.time()
-    global frames, text, last_seen_label, turning_signs, signs_indexes_on_the_path, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index
+    time1 = time.time()
+    global frames, action, text, last_seen_label, turning_signs, signs_indexes_on_the_path, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index
     # log.info(f'Is processed frame with number: {frames}')
 
     # get img width and height
@@ -265,7 +266,7 @@ def frame_process(img):
         prev_line = line_image
 
     new_value = transform_value(x_middle)
-    car_change_rotation(int(round(new_value)))
+    car_change_rotation(int(round(new_value)), action)
 
 
     if time.time() - last_timestamp > 5:
@@ -277,7 +278,7 @@ def frame_process(img):
     cv2.imshow('frame', cv2.resize(line_image, (720, 480)))
 
     time2 = time.time()
-    # log.info(f'Frame processing took {1/(time2-time1)} gfgbngfbngdbngfbgf')
+    log.info(f'Processing {1/(time2-time1)} fps')
 
     # log.info(f'Car offset is {car_offset}')
     # log.info(f'Relative angle is {relative_angle}')
@@ -287,7 +288,7 @@ def frame_process(img):
 def initialize_program():
     global model, shortest_path, intersection_to_go, turning_points, current_intersection_index, turning_signs, signs_indexes_on_the_path, last_seen_label, last_timestamp, current_index, direction
 
-    # open_port() #TODO
+    open_port() #TODO
     model = YOLO(PATH_TO_YOLO)
     # model_path = fr"./models/{MODEL_NAME}_openvino_int8_model/{MODEL_NAME}.xml"
     # init_model(model_path)
@@ -344,6 +345,7 @@ def line_process(live_camera = True):
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             out = cv2.VideoWriter("output_video_camera.mp4", fourcc, 30.0, (width, height), isColor=True)
         
+        change_car_speed(speed = 1)
         while True:
 
             err_code = cap.grab(runtime)
@@ -361,8 +363,9 @@ def line_process(live_camera = True):
                 if output_video:
                     out.write(img)
                 # cv2.imshow('ZED', img)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                stop_car()
+                break
 
     else:
         # Get video capture
@@ -375,6 +378,7 @@ def line_process(live_camera = True):
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             out = cv2.VideoWriter("output_video.mp4", fourcc, 30.0, (width, height), isColor=True)
 
+        change_car_speed(speed = 1)
         # Loop through video frames
         while True:
             ret, img = cap.read()
@@ -386,9 +390,10 @@ def line_process(live_camera = True):
 
                 if output_video:
                     out.write(img)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-                
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                stop_car()
+                break
+            
     cap.release()
     if output_video:
         out.release()

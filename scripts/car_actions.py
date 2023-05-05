@@ -22,8 +22,14 @@ def change_car_speed(speed, time = 0):
             ser.write(b'F')
         elif speed==0.5:
             ser.write(b'f')
+        elif speed==0:
+            ser.write(b'0')
     return "Changing car speed to " + str(speed)
 
+def stop_car():
+    global ser
+    if ser:
+        ser.write(b's')
 
 def car_change_direction(direction):
     global ser
@@ -35,12 +41,14 @@ def car_change_direction(direction):
         elif direction=='straight':
             ser.write(b'f')
     # log.info("Changing direction to " + direction)
-    return "Changing direction to " + direction
+    return 'turn', "Changing direction to " + direction
 
-def car_change_rotation(angle):
+def car_change_rotation(angle, action):
     global ser
-    if ser:
-        ser.write(str(angle))
+    print('HERE I AM RPINTING ANGLE', angle, ser)
+    if action!='turn':
+        if ser:
+            ser.write(str(angle).encode())
     # log.info("Changing rotation to " + angle)
     return "Changing rotation to " + str(angle)
 
@@ -59,17 +67,20 @@ def change_lane(direction):
     # log.info("Changing Lane to " + direction)
     return "Changing Lane to " + direction
 
+
 def get_action(last_seen_label, direction):
     text = None
-
+    action = None
     if last_seen_label == 'crossed_highway_sign':
         text = change_car_speed(speed = 1)
-        # text+= '\n'+ car_change_direction(direction)
+        action, text2 = car_change_direction(direction)
+        # text+= '\n'+ text2
     elif last_seen_label == 'highway_sign':
         text = change_car_speed(speed = 2)
     elif last_seen_label == 'green_light':
         text = change_car_speed(speed = 1)
-        text += '\n'+ car_change_direction(direction)
+        action, text2 = car_change_direction(direction)
+        text += '\n'+ text2
     elif last_seen_label == 'yellow_light':
         text = change_car_speed(speed = 0.5)
     elif last_seen_label == 'red_light':
@@ -85,13 +96,15 @@ def get_action(last_seen_label, direction):
     elif last_seen_label == 'pedestrian_sign':
         text = change_car_speed(speed = 0.5)
     elif last_seen_label == 'priority_sign':
-        text = car_change_direction(direction)
+        action, text = car_change_direction(direction)
     elif last_seen_label == 'roundabout_sign':
         text = do_roundabout_rotation(direction = direction) # direction = 'left' or 'right' or 'straight'
-        text += '\n'+ car_change_direction(direction)
+        action, text2, car_change_direction(direction)
+        text += '\n'+ text2
     elif last_seen_label == 'stop_sign':
         text = change_car_speed(speed = 0, time=2) #change speed to stop only for 2 seconds
-        text += '\n'+ car_change_direction(direction)
+        action, text2 = car_change_direction(direction)
+        text += '\n'+ text2
     elif last_seen_label == 'pedestrian':
         text = change_car_speed(speed = 0)
     elif last_seen_label == 'car':
@@ -101,4 +114,4 @@ def get_action(last_seen_label, direction):
     elif last_seen_label == 'random':
         text = None
 
-    return None, text
+    return action, text

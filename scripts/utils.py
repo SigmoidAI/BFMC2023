@@ -364,21 +364,19 @@ def remove_reflection(image):
 
 
 def find_line_lane(nr_frame, image):
-    #remove the upper half of the image and make it full black
-    copy_image = image.copy()
-    copy_image[0:360, 0:1280] = [0, 0, 0]
-    #raise the brightness of the image
-    copy_image = cv2.convertScaleAbs(copy_image, alpha=1.5, beta=0)
+    # transform to gray scale and hue scale
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blur_gray_image = cv2.GaussianBlur(gray_image, (5, 5), 3)
 
     # this version, hsv mask
-    hsv_image = cv2.cvtColor(copy_image, cv2.COLOR_BGR2HSV)
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     lower_white = np.array([0, 0, bright_high], dtype=np.uint8)
     upper_white = np.array([80, 80, 255], dtype=np.uint8)
     mask = cv2.inRange(hsv_image, lower_white, upper_white)
-    t_image = cv2.bitwise_and(image, copy_image, mask=mask)
+    t_image = cv2.bitwise_and(image, image, mask=mask)
     # print(image.shape)
     # print(image)
-    # cv2.imshow('line_lane_func', t_image)
+    # cv2.imshow('img', image)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
@@ -387,51 +385,34 @@ def find_line_lane(nr_frame, image):
     global old_car_offset
 
     import os
-    # show current path
-    # print(os.getcwd())
     if nr_frame % LINES_RATE == 0:
-        # if nr_frame == 0:
-        #     dereflected_frame = cv2.imread(r'./files/qualification_video/no_reflections_frames/0000.jpg')
-        # elif nr_frame < 100:
-        #     dereflected_frame = cv2.imread(fr'./files/qualification_video/no_reflections_frames/00{nr_frame}.jpg')
-        # elif nr_frame < 1000:
-        #     dereflected_frame = cv2.imread(fr'./files/qualification_video/no_reflections_frames/0{nr_frame}.jpg')
-        # else:
-        #     dereflected_frame = cv2.imread(fr'./files/qualification_video/no_reflections_frames/{nr_frame}.jpg')
-        # no_ref_frame = image.copy()
-        # frame_0_1 = no_ref_frame.copy() / 255.0
-        # dereflected_frame = alg.remove_reflection(frame_0_1)
-
-        # dereflected_frame = remove_reflection(no_ref_frame)
-        # dereflected_frame = cv2.convertScaleAbs((dereflected_frame * 255.0).astype(np.int32))  
-        # t_image = apply_hsv_mask(dereflected_frame)
-        # cv2.imshow('t_image', cv2.resize(t_image, (720, 480)))
 
         # identify edges
-        canny_edges = cv2.Canny(t_image, 50, 150, apertureSize=3)
+        # canny_edges = cv2.Canny(t_image, 50, 150, apertureSize=3)
         # cv2.imshow('canny', canny_edges)
 
+        laplacian_edges = cv2.Laplacian(blur_gray_image, cv2.CV_16S, ksize=3)
+        laplacian_edges = cv2.convertScaleAbs(laplacian_edges)
+
+        # Optional: Apply a threshold to enhance the detected edges
+        _, laplacian_edges = cv2.threshold(laplacian_edges, 30, 255, cv2.THRESH_BINARY)
+
+        # print(canny_edges)
+        # print(laplacian_edges)
+
         imshape = image.shape
-        # lower_left = [0, imshape[0]]
-        # lower_right = [imshape[1], imshape[0] - ]
-        # top_left = [imshape[1] / 2 - imshape[1] / 2.2, imshape[0] / 2.5 + imshape[0] / 10]
-        # top_right = [imshape[1] / 2 + imshape[1] / 2.2, imshape[0] / 2.5 + imshape[0] / 10]
-        # Change these values to control the top and bottom width and height of the ROI
-        top_width_factor = 0.6  # Change this value to control the width of the top side of the trapezoid
-        bottom_width_factor = 0.9  # Change this value to control the width of the bottom side of the trapezoid
-        height_factor = 0.2  # Change this value to control the height of the trapezoid
-
-        lower_left = [imshape[1] * (1 - bottom_width_factor) / 2, imshape[0]]
-        lower_right = [imshape[1] - imshape[1] * (1 - bottom_width_factor) / 2, imshape[0]]
-        top_left = [imshape[1] / 2 - imshape[1] * top_width_factor / 2, imshape[0] * (1 - height_factor)]
-        top_right = [imshape[1] / 2 + imshape[1] * top_width_factor / 2, imshape[0] * (1 - height_factor)]
-
+        lower_left = [0+imshape[1]/10, imshape[0]]
+        lower_right = [imshape[1]-imshape[1]/10, imshape[0]]
+        top_left = [imshape[1] / 2 - imshape[1] / 4, imshape[0] / 2 + imshape[0] / 6]
+        top_right = [imshape[1] / 2 + imshape[1] / 4, imshape[0] / 2 + imshape[0] / 6]
+        
         # identify vertices
         vertices = [np.array([lower_left, top_left, top_right, lower_right], dtype=np.int32)]
         
         # get region of interest image
-        roi_image = get_region_of_interest(canny_edges, vertices)
-        # cv2.imshow('roi_image', roi_image)
+        # roi_image = get_region_of_interest(canny_edges, vertices)
+        roi_image = get_region_of_interest(laplacian_edges, vertices)
+        cv2.imshow('roi_image', roi_image)
         theta = np.pi / 180
 
         line_image, car_offset, angle, x_middle = get_hough_lines(roi_image, 4, theta, 120, 20, 70)
