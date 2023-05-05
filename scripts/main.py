@@ -58,6 +58,7 @@ shortest_path = []
 intersection_to_go = []
 turning_signs = []
 signs_indexes_on_the_path = []
+angle_values = [0, 0, 0, 0, 0]
 G = None
 frames = 0
 last_timestamp = 0
@@ -332,7 +333,7 @@ def init_camera():
 
 
 def line_process(live_camera = True):
-    global frames, runtime, cap, left, res, img_w, img_h, img_area, prev_offset, prev_angle, prev_line, current_index, direction # TODO not sure if should remove something here
+    global frames, runtime, cap, left, res, img_w, img_h, img_area, prev_offset, prev_angle, prev_line, current_index, direction, angle_values # TODO not sure if should remove something here
 
     if live_camera:
         cap = init_camera()
