@@ -360,8 +360,8 @@ def line_process(live_camera = True):
                 if output_video:
                     out.write(img)
                 # cv2.imshow('ZED', img)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
 
     else:
         # Get video capture
@@ -385,9 +385,9 @@ def line_process(live_camera = True):
 
                 if output_video:
                     out.write(img)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-            
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+                
     cap.release()
     if output_video:
         out.release()
