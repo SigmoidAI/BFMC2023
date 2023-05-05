@@ -11,11 +11,21 @@ log = logging.getLogger(__name__)
 def open_port():
     global ser
     ser = serial.Serial('/dev/ttyACM0', 115200) # Open serial port at 9600 bps
+    ser.flushInput()
 
+
+# ser.write(b'S')
 
 def change_car_speed(speed, time = 0):
+    global ser
     # should put global vars
     # log.info("Changing car speed to " + str(speed))
+    # if speed==2:
+    #     ser.write(b'o')
+    # elif speed==1:
+    #     ser.write(b'F')
+    # elif speed==0:
+    #     ser.write(b'f')
     return "Changing car speed to " + str(speed)
 
 
@@ -28,7 +38,9 @@ def car_change_rotation(angle):
     return "Changing rotation to " + str(angle)
 
 def do_parking():
+    global ser
     # log.info("Parking the car in an empty parking lot")
+    # ser.write(b'p')
     return "Parking the car in an empty parking lot"
 
 def do_roundabout_rotation(direction):
@@ -39,10 +51,8 @@ def change_lane(direction):
     # log.info("Changing Lane to " + direction)
     return "Changing Lane to " + direction
 
-def get_action(last_seen_label, direction, relative_angle):
+def get_action(last_seen_label, direction):
     text = None
-
-
 
     if last_seen_label == 'crossed_highway_sign':
         text = change_car_speed(speed = 1)

@@ -184,49 +184,49 @@ def frame_process(img):
     label_class = None
     # Perform object detection using YOLOv5
     with torch.no_grad():
-        # results = model([img]) #
-        results = predict(img)
+        results = model([img]) #
+        # results = predict(img)
 
     # Draw the bounding boxes and class labels on the frame
-    # for bbox in results:
-    #     boxes = bbox.boxes
-    #     for box_i in range(len(boxes)):
-    #         x_min, y_min, x_max, y_max = boxes.xyxy[box_i]
-    #         confidence = boxes.conf[box_i]
-    #         label = boxes.cls[box_i]
-    #         box_area = (x_max - x_min) * (y_max - y_min)
+    for bbox in results:
+        boxes = bbox.boxes
+        for box_i in range(len(boxes)):
+            x_min, y_min, x_max, y_max = boxes.xyxy[box_i]
+            confidence = boxes.conf[box_i]
+            label = boxes.cls[box_i]
+            box_area = (x_max - x_min) * (y_max - y_min)
 
-    for box in results['det']:
-        x_min, y_min, x_max, y_max, confidence, label = box
-        # print(x_min, y_min, x_max, y_max, confidence, label)
-        # calculate area of the box
-        box_area = (x_max - x_min) * (y_max - y_min)
+    # for box in results['det']:
+    #     x_min, y_min, x_max, y_max, confidence, label = box
+    #     # print(x_min, y_min, x_max, y_max, confidence, label)
+    #     # calculate area of the box
+    #     box_area = (x_max - x_min) * (y_max - y_min)
 
-        if confidence > 0.5:
-            color = COLORS[int(label)]
-            label_class = CLASS_NAMES[int(label)]
-            label = f"{CLASS_NAMES[int(label)]} {confidence:.2f}"
-            # log.info(f'Was detected: {label}')
-            if label in ['green_light','red_light', 'yellow_light']:
-                threshold = 0.006
-            else:
-                threshold = 0.0035
-            if box_area>threshold*img_area and last_seen_label != label_class:
-                last_seen_label = label_class
-                last_timestamp = time.time()
-                if label_class == signs_indexes_on_the_path[0] and label_class not in ['car'] :
-                    del signs_indexes_on_the_path[0]
-                    if label_class ==turning_signs[0]:
-                        del turning_signs[0]
-                        # last_seen_label = label_class
-                        current_intersection_index+=1
-                        current_index = shortest_path.index(intersection_to_go[current_intersection_index])
-                        direction = get_turn_direction()
-                    action, text = get_action(last_seen_label, direction)
+            if confidence > 0.5:
+                color = COLORS[int(label)]
+                label_class = CLASS_NAMES[int(label)]
+                label = f"{CLASS_NAMES[int(label)]} {confidence:.2f}"
+                # log.info(f'Was detected: {label}')
+                if label in ['green_light','red_light', 'yellow_light']:
+                    threshold = 0.006
+                else:
+                    threshold = 0.0035
+                if box_area>threshold*img_area and last_seen_label != label_class:
+                    last_seen_label = label_class
                     last_timestamp = time.time()
+                    if label_class == signs_indexes_on_the_path[0] and label_class not in ['car'] :
+                        del signs_indexes_on_the_path[0]
+                        if label_class ==turning_signs[0]:
+                            del turning_signs[0]
+                            # last_seen_label = label_class
+                            current_intersection_index+=1
+                            current_index = shortest_path.index(intersection_to_go[current_intersection_index])
+                            direction = get_turn_direction()
+                        action, text = get_action(last_seen_label, direction)
+                        last_timestamp = time.time()
 
-            cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
-            cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
+                cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
 
 
@@ -264,9 +264,9 @@ def initialize_program():
     global model, shortest_path, intersection_to_go, turning_points, current_intersection_index, turning_signs, signs_indexes_on_the_path, last_seen_label, last_timestamp, current_index, direction
 
     # open_port() #TODO
-    # model = YOLO(PATH_TO_YOLO)
-    model_path = fr"./models/{MODEL_NAME}_openvino_int8_model/{MODEL_NAME}.xml"
-    init_model(model_path)
+    model = YOLO(PATH_TO_YOLO)
+    # model_path = fr"./models/{MODEL_NAME}_openvino_int8_model/{MODEL_NAME}.xml"
+    # init_model(model_path)
 
 
     shortest_path = get_shortest_path()
