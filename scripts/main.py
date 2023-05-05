@@ -24,10 +24,10 @@ NODES_TO_VISIT = ['78', '40', '105','113', '111', '71', '62']
 
 # Constants
 PATH_TO_GRAPHML = r'./files/Competition_track.graphml'
-PATH_TO_YOLO = r'./models/semifinal_model_1.pt'   #r'./models/best_based_on_8n.pt'
+PATH_TO_YOLO = r'./models/semifinal_model_2.pt'   #r'./models/best_based_on_8n.pt'
 MODEL_NAME = 'semifinal_model_1'
-PATH_TO_VIDEO = r'files\real_track_11_right.avi'
-FRAME_FREQUENCY = 3
+PATH_TO_VIDEO = r'files\semi_final_track_1_right.avi'
+FRAME_FREQUENCY = 30
 CLASS_NAMES = ['crossed_highway_sign', 'green_light', 'highway_sign', 'no_entry_sign','one_way_road_sign', 'parking_sign','pedestrian_sign', 'priority_sign', 'red_light', 'roundabout_sign','stop_sign', 'yellow_light', 'car', 'pedestrian', 'roadblock']
 COLORS = [(92,164,100),(0,255,0),(65,174,68), (51,51,255),(255,0,0), (204,0,0),(255,153,51),(51,255,255),(0,0,255), (192,192,192),(0,0,204), (0,255,255),(0,0,0), (204,229,255),(0,128,255)]
 DISPLAY_MESSAGE = ["CROSSED HIGHWAY, SPEED 1", 'GO', 'HIGHWAY, SPEED 2', 'NO ENTRY','ONE WAY ROAD', 'DO PARKING, SPEED 0.5','CROSSWALK, LOOK OUT, SPEED 0.5', 'PRIORITY', 'RED LIGHT, STOP', 'ROUNDABOUT','STOP', 'YELLOW, wait', 'CAR', 'PEDESTRIAN', 'OBSTACLE!']
@@ -157,44 +157,50 @@ def get_shortest_path():
 
 
     # '86','77','82','78', '87', '45', '48','40','90', '54',
-    shortest_path = ['100','4', '9', '5', '112', '34', '38', '35', '107','108','109', '52', '57', '49', '308', \
-    '309', '310', '311', '312', '375', '376', '377', '378', '379', '380', '381', '382', '383', '384', \
-    '385', '386', '387', '388', '389', '390', '391', '392', '393', '394', '395', '396', '397', '398', \
-    '338', '339', '340', '341', '342', '305', '306', '231', '232', '233', '234', '235', '236', \
-    '237', '238', '239', '240', '241', '242', '243', '244', '245', '246', '247', '248', '249', '250', \
-    '251', '252', '253', '254', '255', '256', '257', '258', '259', '260', '261', '262', '263', '264', \
-    '265', '266', '172', '173', '174', '175', '176', '177', '178', '179', '180', '181', '182', '183', \
-    '184', '185', '186', '187', '188', '189', '190', '191', '192', '193', '194', '195', '196', '197', \
-    '63', '66', '58', '129', '130', '131', '132', '133', '72', '75', '69', '110', '2', '9', '8', '139', \
-    '140', '141', '137', '138', '16', '19', '17', '146', '25', '28', '22', '288', '289', '290', '291', '292', \
-    '293', '294', '295', '296', '297', '298', '299', '300'] 
+    # shortest_path = ['100','4', '9', '5', '112', '34', '38', '35', '107','108','109', '52', '57', '49', '308', \
+    # '309', '310', '311', '312', '375', '376', '377', '378', '379', '380', '381', '382', '383', '384', \
+    # '385', '386', '387', '388', '389', '390', '391', '392', '393', '394', '395', '396', '397', '398', \
+    # '338', '339', '340', '341', '342', '305', '306', '231', '232', '233', '234', '235', '236', \
+    # '237', '238', '239', '240', '241', '242', '243', '244', '245', '246', '247', '248', '249', '250', \
+    # '251', '252', '253', '254', '255', '256', '257', '258', '259', '260', '261', '262', '263', '264', \
+    # '265', '266', '172', '173', '174', '175', '176', '177', '178', '179', '180', '181', '182', '183', \
+    # '184', '185', '186', '187', '188', '189', '190', '191', '192', '193', '194', '195', '196', '197', \
+    # '63', '66', '58', '129', '130', '131', '132', '133', '72', '75', '69', '110', '2', '9', '8', '139', \
+    # '140', '141', '137', '138', '16', '19', '17', '146', '25', '28', '22', '288', '289', '290', '291', '292', \
+    # '293', '294', '295', '296', '297', '298', '299', '300'] 
      
+
+    # , '48','40','90', '54',
+    shortest_path = ['86','77','82','78', '87', '45', '46', '42', '98', '99', '100','4', '9', '7', '134',
+    '135', '136', '137', '138', '16', '19', '13', '145', '61', '65', '62', '148', '149',
+    '150', '151', '152', '153', '154', '155', '156', '157', '158', '159', '160', '161',
+    '162', '163', '164', '165', '166', '167', '168', '169', '170', '171', '198', '199',
+    '200', '201', '202', '203', '204', '205', '206', '207', '208', '209', '210', '211',
+    '212', '213', '214', '215', '216', '217', '218', '219', '220', '221', '222', '223',
+    '224', '225', '226', '227', '228', '229', '230', '267', '268', '269', '270', '271',
+    '272', '273', '274', '275', '276', '277', '278', '279', '280', '281', '282', '283',
+    '284', '285', '286', '287', '23', '28', '26', '119', '120', '121', '122', '123', '32',
+    '38', '33', '107', '108', '109', '52', '57', '53', '91', '41', '46', '44', '89', '79',
+    '82', '76','85']              
+  
     # log.info(f"Starting point is {STARTING_NODE}")
     # log.info(f"Generated path is {shortest_path}")
 
     return shortest_path
 
-def get_global_angle(weight):
-    global angle_values
-    # Ensure the weight is in the range [0, 1]
-    weight = max(0, min(weight, 1))
+def transform_value(old_value, old_min=400, old_max=780, new_min=1, new_max=9):
+    new_value = (old_value - old_min) * (new_max - new_min) / (old_max - old_min) + new_min
+    
+    # Ensure the new value is within the new interval limits
+    new_value = max(new_min, min(new_value, new_max))
+    
+    return new_value
 
-    # Calculate the remaining weight and the decay factor
-    remaining_weight = 1 - weight
-    decay_factor = 0.5
-
-    # Calculate the exponential decay for each of the other angles
-    num_angles = len(angle_values)
-    weights = [remaining_weight * (decay_factor ** (num_angles - 1 - i)) for i in range(num_angles - 1)] + [weight]
-
-    # Compute the global angle as the weighted sum of the angles
-    global_angle = sum(angle * weight for angle, weight in zip(angle_values, weights))
-
-    return global_angle
 
 def frame_process(img):
-    time1 = time.time()
-    global frames, text, last_seen_label, turning_signs, signs_indexes_on_the_path, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index, angle_values
+    # img = cv2.resize(img, (360,640))
+    # time1 = time.time()
+    global frames, text, last_seen_label, turning_signs, signs_indexes_on_the_path, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index
     # log.info(f'Is processed frame with number: {frames}')
 
     # get img width and height
@@ -203,7 +209,7 @@ def frame_process(img):
     label_class = None
     # Perform object detection using YOLOv5
     with torch.no_grad():
-        results = model([img]) #
+        results = model([img], verbose=False) #
         # results = predict(img)
 
     # Draw the bounding boxes and class labels on the frame
@@ -226,7 +232,7 @@ def frame_process(img):
                 label_class = CLASS_NAMES[int(label)]
                 label = f"{CLASS_NAMES[int(label)]} {confidence:.2f}"
                 # log.info(f'Was detected: {label}')
-                if label in ['green_light','red_light', 'yellow_light']:
+                if label_class in ['green_light','red_light', 'yellow_light']:
                     threshold = 0.006
                 else:
                     threshold = 0.0035
@@ -247,9 +253,7 @@ def frame_process(img):
                 cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
                 cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-
-
-    car_offset, relative_angle, line_image = find_line_lane(frames, img)
+    car_offset, relative_angle, line_image, x_middle = find_line_lane(frames, img)
     if (car_offset == -1) and (relative_angle == -1) and (line_image == -1):
         car_offset = prev_offset
         relative_angle = prev_angle
@@ -260,11 +264,8 @@ def frame_process(img):
         prev_angle = relative_angle
         prev_line = line_image
 
-    # add the relative angle to the end of the list of angles and push out the first one
-    angle_values = angle_values[1:] + [relative_angle]
-    global_angle = get_global_angle(weight=0.8)
-    log.info(f'Global angle is {angle_values}')
-    car_change_rotation(global_angle)
+    new_value = transform_value(x_middle)
+    car_change_rotation(int(round(new_value)))
 
 
     if time.time() - last_timestamp > 5:
@@ -332,7 +333,7 @@ def init_camera():
 
 
 def line_process(live_camera = True):
-    global frames, runtime, cap, left, res, img_w, img_h, img_area, prev_offset, prev_angle, prev_line, current_index, direction # TODO not sure if should remove something here
+    global frames, runtime, cap, left, res, img_w, img_h, img_area, prev_offset, prev_angle, prev_line, current_index, direction, angle_values # TODO not sure if should remove something here
 
     if live_camera:
         cap = init_camera()
