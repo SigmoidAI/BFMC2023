@@ -412,7 +412,7 @@ def find_line_lane(nr_frame, image):
         # get region of interest image
         # roi_image = get_region_of_interest(canny_edges, vertices)
         roi_image = get_region_of_interest(laplacian_edges, vertices)
-        cv2.imshow('roi_image', roi_image)
+        # cv2.imshow('roi_image', roi_image)
         theta = np.pi / 180
 
         line_image, car_offset, angle, x_middle = get_hough_lines(roi_image, 4, theta, 120, 20, 70)
@@ -431,7 +431,67 @@ def find_line_lane(nr_frame, image):
         return old_car_offset, old_angle, results, 0
     return car_offset, relative_angle, results, x_middle
 
+def find_horizontal_line(nr_frame, image):
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blur_gray_image = cv2.GaussianBlur(gray_image, (5, 5), 3)
 
+    if nr_frame % LINES_RATE == 0:
+
+        # identify edges
+        # canny_edges = cv2.Canny(t_image, 50, 150, apertureSize=3)
+        # cv2.imshow('canny', canny_edges)
+
+        laplacian_edges = cv2.Laplacian(blur_gray_image, cv2.CV_16S, ksize=3)
+        laplacian_edges = cv2.convertScaleAbs(laplacian_edges)
+
+        # Optional: Apply a threshold to enhance the detected edges
+        _, laplacian_edges = cv2.threshold(laplacian_edges, 30, 255, cv2.THRESH_BINARY)
+
+        imshape = image.shape
+        lower_left = [0+imshape[1]/10, imshape[0]]
+        lower_right = [imshape[1]-imshape[1]/10, imshape[0]]
+        top_left = [imshape[1] / 2 - imshape[1] / 4, imshape[0] / 2 + imshape[0] / 6]
+        top_right = [imshape[1] / 2 + imshape[1] / 4, imshape[0] / 2 + imshape[0] / 6]
+        
+        # identify vertices
+        vertices = [np.array([lower_left, top_left, top_right, lower_right], dtype=np.int32)]
+        
+        # get region of interest image
+        # roi_image = get_region_of_interest(canny_edges, vertices)
+        roi_image = get_region_of_interest(laplacian_edges, vertices)
+
+        # Enhance horizontal lines
+        # Enhance horizontal lines
+        sobel_horizontal = cv2.Sobel(roi_image, cv2.CV_64F, 0, 1, ksize=5)
+        _, sobel_horizontal = cv2.threshold(sobel_horizontal, 30, 255, cv2.THRESH_BINARY)
+
+        # HoughLinesP transform
+        min_line_length = int(image.shape[1] * 0.15)
+        max_line_gap = 50
+        lines = cv2.HoughLinesP(sobel_horizontal.astype(np.uint8), 1, np.pi / 180, 100, min_line_length, max_line_gap)
+
+        exist_horizontal_line = False
+        # Iterate through the detected lines and draw them on the original image
+        if lines is not None:
+            for line in lines:
+                x1, y1, x2, y2 = line[0]
+
+                # Calculate the line angle (in degrees)
+                angle = np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi
+
+                # Check if the line is close to horizontal
+                if -10 <= angle <= 10:
+                    # Calculate the length of the line
+                    line_length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+                    # Check if the line length is at least 15% of the image width
+                    if line_length >= min_line_length:
+                        exist_horizontal_line = True
+                        cv2.line(image, (x1, y1), (x2, y2), (0, 0, 255), 2)            
+
+        # cv2.imshow('horizontal_line', image)
+
+        return exist_horizontal_line
 
 #### VOVA PART ####
 

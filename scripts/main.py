@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from utils import find_line_lane, shortest_path_without_weights, intersections, point_to_sign
+from utils import find_line_lane, shortest_path_without_weights, find_horizontal_line, intersections, point_to_sign
 #from openvino_detection import init_model, predict
 import logging
 import json
@@ -24,7 +24,7 @@ NODES_TO_VISIT = ['78', '40', '105','113', '111', '71', '62']
 
 # Constants
 PATH_TO_GRAPHML = r'./files/Competition_track.graphml'
-PATH_TO_YOLO = r'./models/semifinal_model_2.pt'   #r'./models/best_based_on_8n.pt'
+PATH_TO_YOLO = r'./models/semifinal_model_3.pt'   #r'./models/best_based_on_8n.pt'
 MODEL_NAME = 'semifinal_model_1'
 PATH_TO_VIDEO = r'files/semi_final_track_1_right.avi'
 FRAME_FREQUENCY = 10
@@ -50,6 +50,8 @@ runtime = None
 left = None 
 
 # variables for algorithm
+found_sign = None
+found_horizontal_line = None
 current_intersection_index = -1
 current_index = 0
 past_current_index = 0
@@ -75,6 +77,8 @@ device = 'cuda'
 # Flags
 go_to_old_road = False # can calculate it from points to visit
 output_video = False
+
+previous_wheels_state = 5
 
 
 # Set the font type
@@ -182,32 +186,88 @@ def get_shortest_path():
     '272', '273', '274', '275', '276', '277', '278', '279', '280', '281', '282', '283',
     '284', '285', '286', '287', '23', '28', '26', '119', '120', '121', '122', '123', '32',
     '38', '33', '107', '108', '109', '52', '57', '53', '91', '41', '46', '44', '89', '79',
-    '82', '76','85']              
+    '82', '76','85']    
+
+    shortest_path2 = ['86','77','82','78', '87', '45', '46', '42', '98', '99', '100','4', '9', '7', '134',
+    '140', '141', '142', '143', '15', '19', '17', '146', '25', '00', '26', '119', '120', '121', '122',
+    '123', '32', '30', '33', '113', '6', '90', '1', '111', '70', '75', '71', '124', '125', '126', '127',
+    '128', '59', '65', '62', '148', '149', '150', '151', '152', '153', '154', '155', '156', '157',
+    '158', '159', '160', '161', '162', '163', '164', '165', '166', '167', '168', '169', '170', '171', '198', '199',
+    '200', '201', '202', '203', '204', '205', '206', '207', '208', '209', '210', '211',
+    '212', '213', '214', '215', '216', '217', '218', '219', '220', '221', '222', '223',
+    '224', '225', '226', '227', '228', '229', '230', '267', '268', '269', '270', '271',
+    '272', '273', '274', '275', '276', '277', '278', '279', '280', '281', '282', '283',
+    '284', '285', '286', '287', '23', '28', '26', '119', '120', '121', '122', '123', '32',
+    '38', '33', '107', '108', '109', '52', '57', '53', '91', '41', '46', '44', '89', '79',
+    '82', '76','85']         
   
     # log.info(f"Starting point is {STARTING_NODE}")
     # log.info(f"Generated path is {shortest_path}")
 
     return shortest_path
 
-def transform_value(old_value, old_min=400, old_max=780, new_min=1, new_max=9):
-    new_value = (old_value - old_min) * (new_max - new_min) / (old_max - old_min) + new_min
+# def transform_value(old_value, old_min=400, old_max=780, new_min=1, new_max=9):
+#     new_value = (old_value - old_min) * (new_max - new_min) / (old_max - old_min) + new_min
     
-    # Ensure the new value is within the new interval limits
-    new_value = max(new_min, min(new_value, new_max))
+#     # Ensure the new value is within the new interval limits
+#     new_value = max(new_min, min(new_value, new_max))
     
-    return new_value
+#     return new_value
+
+
+def transform_value(x):
+    
+    global previous_wheels_state
+
+    maximum = 900
+    minimum = 300
+
+    step = (maximum - minimum) / 9
+    
+    if x == 0:
+        return previous_wheels_state
+    if minimum <= x < minimum + step:
+        previous_wheels_state = 1
+        return 1
+    elif minimum + step <= x < minimum + 2 * step:
+        previous_wheels_state = 2
+        return 2
+    elif minimum + 2 * step <= x < minimum + 3 * step:
+        previous_wheels_state = 3
+        return 3
+    elif minimum + 3 * step <= x < minimum + 4 * step:
+        previous_wheels_state = 4
+        return 4
+    elif minimum + 4 * step <= x < minimum + 5 * step:
+        previous_wheels_state = 5
+        return 5
+    elif minimum + 5 * step <= x < minimum + 6 * step:
+        previous_wheels_state = 6
+        return 6
+    elif minimum + 6 * step <= x < minimum + 7 * step:
+        previous_wheels_state = 7
+        return 7
+    elif minimum + 7 * step <= x < minimum + 8 * step:
+        previous_wheels_state = 8
+        return 8
+    elif minimum + 8 * step <= x < minimum + 9 * step:
+        previous_wheels_state = 9
+        return 9
 
 
 def frame_process(img):
     # img = cv2.resize(img, (360,640))
     time1 = time.time()
-    global frames, action, text, last_seen_label, turning_signs, signs_indexes_on_the_path, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index
+    global frames, action, found_sign, found_horizontal_line, text, last_seen_label, turning_signs, signs_indexes_on_the_path, last_timestamp, direction, prev_offset, prev_angle, current_intersection_index, G, current_index
     # log.info(f'Is processed frame with number: {frames}')
 
     # get img width and height
     img_h, img_w, _ = img.shape
     img_area = img_h * img_w
     label_class = None
+
+    is_horizontal_line_present = find_horizontal_line(frames, img)
+    seen_signs = []
     # Perform object detection using YOLOv5
     with torch.no_grad():
         results = model([img], verbose=False) #
@@ -221,7 +281,7 @@ def frame_process(img):
             confidence = boxes.conf[box_i]
             label = boxes.cls[box_i]
             box_area = (x_max - x_min) * (y_max - y_min)
-
+            seen_signs.append(label)
     # for box in results['det']:
     #     x_min, y_min, x_max, y_max, confidence, label = box
     #     # print(x_min, y_min, x_max, y_max, confidence, label)
@@ -234,16 +294,18 @@ def frame_process(img):
                 label = f"{CLASS_NAMES[int(label)]} {confidence:.2f}"
                 # log.info(f'Was detected: {label}')
                 if label_class in ['green_light','red_light', 'yellow_light']:
-                    threshold = 0.006
+                    threshold = 0.012
                 else:
-                    threshold = 0.0035
+                    threshold = 0.006
                 if box_area>threshold*img_area and last_seen_label != label_class:
                     last_seen_label = label_class
                     last_timestamp = time.time()
                     if label_class == signs_indexes_on_the_path[0] and label_class not in ['car'] :
                         del signs_indexes_on_the_path[0]
                         if label_class ==turning_signs[0]:
+                            found_sign = True
                             del turning_signs[0]
+                            print('Intersection found by signs')
                             # last_seen_label = label_class
                             current_intersection_index+=1
                             current_index = shortest_path.index(intersection_to_go[current_intersection_index])
@@ -253,6 +315,15 @@ def frame_process(img):
 
                 cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), color, 2)
                 cv2.putText(img, label, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+    if is_horizontal_line_present and found_sign == False and len(seen_signs)==0 and found_horizontal_line == False :
+        found_horizontal_line = True
+        print('Intersection found by horizontal line')
+        current_intersection_index+=1
+        current_index = shortest_path.index(intersection_to_go[current_intersection_index])                    
+        direction = get_turn_direction()
+        action, text = get_action('horizontal_line', direction)
+        last_timestamp = time.time()
 
     car_offset, relative_angle, line_image, x_middle = find_line_lane(frames, img)
     if (car_offset == -1) and (relative_angle == -1) and (line_image == -1):
@@ -266,19 +337,21 @@ def frame_process(img):
         prev_line = line_image
 
     new_value = transform_value(x_middle)
-    car_change_rotation(int(round(new_value)), action)
+    car_change_rotation(new_value, action)
 
 
     if time.time() - last_timestamp > 5:
         last_seen_label = 'random'
         direction = ''
+        found_sign = False
+        found_horizontal_line = False
 
     cv2.putText(line_image, text, (x,y), font, font_scale, (255, 0, 0), thickness)
     cv2.putText(line_image, direction, (int(img_w/2), int(img_h/2) ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0, 2)
     cv2.imshow('frame', cv2.resize(line_image, (720, 480)))
 
     time2 = time.time()
-    log.info(f'Processing {1/(time2-time1)} fps')
+    # log.info(f'Processing {1/(time2-time1)} fps')
 
     # log.info(f'Car offset is {car_offset}')
     # log.info(f'Relative angle is {relative_angle}')
@@ -288,7 +361,7 @@ def frame_process(img):
 def initialize_program():
     global model, shortest_path, intersection_to_go, turning_points, current_intersection_index, turning_signs, signs_indexes_on_the_path, last_seen_label, last_timestamp, current_index, direction
 
-    open_port() #TODO
+    # open_port() #TODO
     model = YOLO(PATH_TO_YOLO)
     # model_path = fr"./models/{MODEL_NAME}_openvino_int8_model/{MODEL_NAME}.xml"
     # init_model(model_path)
@@ -301,7 +374,7 @@ def initialize_program():
 
     signs_on_the_path = [x for x in shortest_path if point_to_sign.get(int(x))]
     signs_indexes_on_the_path = [point_to_sign.get(int(x)) for x in shortest_path if point_to_sign.get(int(x))]
-    turning_points = [x for x in signs_on_the_path if x not in ['49','338', '171', '265', '295', '276', '92', '95','8' '7' '427','468', '15', '16','181', '177', '162', '165']]
+    turning_points = [x for x in signs_on_the_path if x not in ['49','338', '171', '265', '295', '276', '92', '95','8', '7', '427','468', '15', '16','181', '177', '162', '165']]
     if '311' in turning_points and go_to_old_road==False:
         turning_points.remove('311')
         intersection_to_go.remove('312')
@@ -346,6 +419,7 @@ def line_process(live_camera = True):
             out = cv2.VideoWriter("output_video_camera.mp4", fourcc, 30.0, (width, height), isColor=True)
         
         change_car_speed(speed = 1)
+
         while True:
 
             err_code = cap.grab(runtime)
@@ -353,7 +427,7 @@ def line_process(live_camera = True):
                 break
             frames += 1
 
-            cap.retrieve_image(left, sl.VIEW.LEFT, resolution=res)
+            cap.retrieve_image(left, sl.VIEW.RIGHT, resolution=res)
 
             if frames%FRAME_FREQUENCY == 0:
 
@@ -379,6 +453,7 @@ def line_process(live_camera = True):
             out = cv2.VideoWriter("output_video.mp4", fourcc, 30.0, (width, height), isColor=True)
 
         change_car_speed(speed = 1)
+
         # Loop through video frames
         while True:
             ret, img = cap.read()
@@ -449,6 +524,7 @@ def runVehicleListener():
 
 
 if __name__=="__main__":
+
     initialize_program()
     # runTrafficLightListener()
     # runVehicleListener()
